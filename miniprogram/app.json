@@ -3,6 +3,7 @@
     "pages/splash/index",
     "pages/onboarding/pet/index",
     "pages/home/index",
+    "pages/weights/index",
     "pages/pets/index",
     "pages/records/index",
     "pages/mine/index",
@@ -29,7 +30,7 @@
     "borderStyle": "white",
     "list": [
       { "pagePath": "pages/home/index", "text": "首页" },
-      { "pagePath": "pages/pets/index", "text": "猫咪" },
+      { "pagePath": "pages/pets/index", "text": "猫猫档案" },
       { "pagePath": "pages/mine/index", "text": "我的" }
     ]
   },

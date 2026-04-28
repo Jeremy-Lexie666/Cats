@@ -4,6 +4,7 @@ import { formatPetAge, getDaysLeft } from "../../utils/pet";
 import { syncTabBar } from "../../utils/tabbar";
 
 type ReminderRow = { id: string; label: string; dueText: string };
+type WeightTrendView = { text: string; className: string };
 
 function buildReminderRows(records: PetRecord[]): ReminderRow[] {
   const rows = records
@@ -32,7 +33,7 @@ function buildReminderRows(records: PetRecord[]): ReminderRow[] {
   ].slice(0, 2);
 }
 
-function getWeightTrend(records: PetRecord[]): string {
+function getWeightTrend(records: PetRecord[]): WeightTrendView {
   const weights = records
     .filter((item): item is Extract<PetRecord, { type: "weight" }> => item.type === "weight")
     .sort((a, b) => b.recordedAt.localeCompare(a.recordedAt));
@@ -40,19 +41,25 @@ function getWeightTrend(records: PetRecord[]): string {
   if (weights.length >= 2) {
     const delta = Number((weights[0].weightKg - weights[1].weightKg).toFixed(1));
     if (delta === 0) {
-      return "持平";
+      return { text: "持平", className: "" };
     }
-    return `${delta > 0 ? "↑" : "↓"} ${Math.abs(delta).toFixed(1)}kg`;
+    return {
+      text: `${delta > 0 ? "↑" : "↓"} ${Math.abs(delta).toFixed(1)} kg`,
+      className: delta > 0 ? "up" : "down"
+    };
   }
 
   const note = weights[0]?.note || "";
   const matched = note.match(/([+-]?\d+(?:\.\d+)?)kg/i);
   if (matched) {
     const value = Number(matched[1]);
-    return `${value >= 0 ? "↑" : "↓"} ${Math.abs(value).toFixed(1)}kg`;
+    return {
+      text: `${value >= 0 ? "↑" : "↓"} ${Math.abs(value).toFixed(1)} kg`,
+      className: value >= 0 ? "up" : "down"
+    };
   }
 
-  return "稳定";
+  return { text: "稳定", className: "" };
 }
 
 function getHomeStatus(reminderItems: ReminderRow[]): string {
@@ -79,6 +86,7 @@ Page({
     reminderCountText: "0条",
     latestWeightValue: "--",
     weightTrendText: "稳定",
+    weightTrendClass: "",
     loading: true
   },
   async onShow() {
@@ -99,6 +107,7 @@ Page({
     const currentPetId = home.currentPet.id;
     const currentPetRecords = await api.listRecords({ petId: currentPetId });
     const reminderItems = buildReminderRows(currentPetRecords);
+    const trend = getWeightTrend(currentPetRecords);
 
     this.setData({
       currentPetId,
@@ -108,7 +117,8 @@ Page({
       reminderItems,
       reminderCountText: `${reminderItems.length}条`,
       latestWeightValue: home.latestWeight ? home.latestWeight.weightKg.toFixed(1) : "--",
-      weightTrendText: getWeightTrend(currentPetRecords),
+      weightTrendText: trend.text,
+      weightTrendClass: trend.className,
       loading: false
     });
   },
@@ -119,9 +129,9 @@ Page({
     wx.switchTab({ url: "/pages/pets/index" });
   },
   openWeight() {
-    wx.navigateTo({ url: `/pages/pets/detail/index?id=${this.data.currentPetId}` });
+    wx.navigateTo({ url: `/pages/weights/index?petId=${this.data.currentPetId}` });
   },
   addRecord() {
-    wx.navigateTo({ url: `/pages/records/edit/index?petId=${this.data.currentPetId}` });
+    wx.navigateTo({ url: `/pages/records/edit/index?petId=${this.data.currentPetId}&mode=healthOnly&type=vaccine` });
   }
 });

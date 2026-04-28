@@ -11,7 +11,7 @@ Component({
       },
       {
         key: "pets",
-        label: "猫咪",
+        label: "猫猫档案",
         path: "/pages/pets/index",
         activeIcon: "/assets/icons/tab-heart-active.svg",
         inactiveIcon: "/assets/icons/tab-heart.svg"

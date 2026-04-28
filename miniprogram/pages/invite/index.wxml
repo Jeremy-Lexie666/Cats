@@ -1,8 +1,12 @@
 <view class="page-shell">
   <view class="light-card invite-hero">
-    <view class="pill">微信分享邀请</view>
-    <view class="top-title">{{familyName}}</view>
-    <view class="top-subtitle">把这张邀请卡片分享给家人，对方用自己的微信打开后加入同一个家庭。</view>
+    <view class="pill">{{inviteMode === 'guest' ? '加入家庭' : '微信分享邀请'}}</view>
+    <view class="top-title">{{inviteMode === 'guest' ? '加入同一个猫咪家庭' : familyName}}</view>
+    <view class="top-subtitle">
+      {{inviteMode === 'guest'
+        ? '确认邀请码后，填写一个家庭称呼，就可以一起查看小猫的成长记录。'
+        : '把这张邀请卡片分享给家人，对方用自己的微信打开后加入同一个家庭。'}}
+    </view>
     <view class="invite-mascot">
       <view class="invite-glow"></view>
       <view class="invite-cat">猫</view>
@@ -11,11 +15,20 @@
 
   <view class="light-card invite-code-card">
     <view class="section-eyebrow">邀请码</view>
-    <view class="section-title">给家人的加入口令</view>
+    <view class="section-title">{{inviteMode === 'guest' ? '确认家庭口令' : '给家人的加入口令'}}</view>
     <view class="invite-code">{{inviteCode}}</view>
     <view class="row-desc">{{expiresHint}} · 当前已有 {{memberCount}} 位成员</view>
-    <view class="invite-tip">家人收到卡片后，可直接打开小程序确认加入；也可以手动输入邀请码进入家庭。</view>
-    <button class="secondary-button sticky-button" bindtap="copyCode">复制邀请码</button>
-    <button class="primary-button sticky-button" open-type="share">发送邀请卡片</button>
+
+    <block wx:if="{{inviteMode === 'guest'}}">
+      <view class="join-label">家庭中的称呼</view>
+      <input class="input join-input" placeholder="例如：妈妈 / 爸爸 / 家人" value="{{joinDisplayName}}" bindinput="handleNameInput" />
+      <button class="primary-button sticky-button" loading="{{joinLoading}}" bindtap="joinFamily">确认加入家庭</button>
+    </block>
+
+    <block wx:else>
+      <view class="invite-tip">家人收到卡片后，可直接打开小程序确认加入；也可以手动输入邀请码进入家庭。</view>
+      <button class="secondary-button sticky-button" bindtap="copyCode">复制邀请码</button>
+      <button class="primary-button sticky-button" open-type="share">发送邀请卡片</button>
+    </block>
   </view>
 </view>

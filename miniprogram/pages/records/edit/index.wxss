@@ -1,38 +1,10 @@
-.section-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 14rpx;
-}
-
-.back-button,
-.back-placeholder {
-  width: 32rpx;
-  height: 32rpx;
-}
-
-.back-button {
-  border-radius: 999rpx;
-  background: #f7f5f3;
-  color: #2e2a27;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 24rpx;
-}
-
-.center-title {
-  font-size: 28rpx;
-  font-weight: 500;
-}
-
 .type-switch {
   display: flex;
   gap: 6rpx;
   background: #f7f5f3;
   padding: 6rpx;
   border-radius: 20rpx;
-  margin-bottom: 14rpx;
+  margin-bottom: 18rpx;
 }
 
 .type-tab {
@@ -52,25 +24,6 @@
 .type-icon {
   margin-bottom: 4rpx;
   font-size: 18rpx;
-}
-
-.record-cat-row {
-  display: flex;
-  gap: 6rpx;
-  margin-bottom: 14rpx;
-}
-
-.record-cat-chip {
-  padding: 10rpx 14rpx;
-  border-radius: 16rpx;
-  background: #f7f5f3;
-  color: #2e2a27;
-  font-size: 18rpx;
-}
-
-.record-cat-chip.active {
-  background: #d4a574;
-  color: #ffffff;
 }
 
 .form-stack {

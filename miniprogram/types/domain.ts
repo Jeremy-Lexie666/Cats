@@ -100,6 +100,7 @@ export interface PetDetailData {
 }
 
 export interface RecordDraft {
+  id?: string;
   petId: string;
   type: RecordType;
   vaccineName?: string;

@@ -132,8 +132,16 @@
 .weight-trend {
   margin-left: 4rpx;
   font-size: 20rpx;
-  color: #9fb4a8;
+  color: #8f857d;
   font-weight: 600;
+}
+
+.weight-trend.up {
+  color: #e07c87;
+}
+
+.weight-trend.down {
+  color: #7fa88f;
 }
 
 .weight-bars {
@@ -211,10 +219,11 @@
 }
 
 .mini-action-title {
-  font-size: 22rpx;
+  font-size: 20rpx;
   line-height: 1.4;
   color: #2e2a27;
   font-weight: 600;
+  text-align: center;
 }
 
 .no-margin {

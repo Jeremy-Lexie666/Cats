@@ -34,7 +34,7 @@
 }
 
 .tab-label {
-  font-size: 18rpx;
+  font-size: 16rpx;
   line-height: 1.2;
   font-weight: 600;
 }

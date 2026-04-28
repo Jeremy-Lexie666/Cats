@@ -1,32 +1,15 @@
 <view class="page-shell">
-  <view class="section-header">
-    <view class="back-button" bindtap="backHome">‹</view>
-    <view class="section-title center-title">新增记录</view>
-    <view class="back-placeholder"></view>
-  </view>
-
-  <view class="type-switch">
+  <view wx:if="{{pageMode !== 'weightOnly'}}" class="type-switch">
     <view
       wx:for="{{typeTabs}}"
       wx:key="key"
+      wx:if="{{item.key !== 'weight'}}"
       class="type-tab {{selectedType === item.key ? 'active' : ''}}"
       data-type="{{item.key}}"
       bindtap="switchType"
     >
-      <view class="type-icon">{{item.key === 'vaccine' ? '疫' : item.key === 'deworm' ? '驱' : '重'}}</view>
+      <view class="type-icon">{{item.key === 'vaccine' ? '疫' : '驱'}}</view>
       {{item.label}}
-    </view>
-  </view>
-
-  <view class="record-cat-row">
-    <view
-      wx:for="{{pets}}"
-      wx:key="id"
-      class="record-cat-chip {{petIndex === index ? 'active' : ''}}"
-      data-index="{{index}}"
-      bindtap="handlePetChipTap"
-    >
-      {{item.name}}
     </view>
   </view>
 

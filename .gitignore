@@ -13,3 +13,6 @@ project.private.config.json
 
 # Imported design reference files
 小猫来了/
+
+# Local backend runtime data
+backend/data/runtime/

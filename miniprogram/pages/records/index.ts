@@ -13,7 +13,7 @@ Page({
       { key: "deworm", label: "驱虫" },
       { key: "weight", label: "体重" }
     ],
-    recordItems: [] as Array<{ id: string; title: string; desc: string; date: string }>
+    recordItems: [] as Array<{ id: string; title: string; desc: string; date: string; type: string }>
   },
   async onShow() {
     syncTabBar(this, "records");
@@ -34,6 +34,7 @@ Page({
     this.setData({
       recordItems: records.map((item) => ({
         id: item.id,
+        type: item.type,
         title: getRecordTitle(item),
         desc: getRecordSummary(item),
         date: formatShortDate(
@@ -48,6 +49,30 @@ Page({
     await this.refresh();
   },
   createRecord() {
-    wx.navigateTo({ url: `/pages/records/edit/index?petId=${this.data.currentPetId}` });
+    const type = this.data.filterType === "all" ? "vaccine" : this.data.filterType;
+    const mode = type === "weight" ? "weightOnly" : type === "deworm" || type === "vaccine" ? "healthOnly" : "all";
+    wx.navigateTo({ url: `/pages/records/edit/index?petId=${this.data.currentPetId}&type=${type}&mode=${mode}` });
+  },
+  editRecord(event: WechatMiniprogram.TouchEvent) {
+    const { id, type } = event.currentTarget.dataset as { id?: string; type?: string };
+    if (!id || !type) return;
+    const mode = type === "weight" ? "weightOnly" : "healthOnly";
+    wx.navigateTo({ url: `/pages/records/edit/index?petId=${this.data.currentPetId}&type=${type}&mode=${mode}&recordId=${id}` });
+  },
+  deleteRecord(event: WechatMiniprogram.TouchEvent) {
+    const { id } = event.currentTarget.dataset as { id?: string };
+    if (!id) return;
+
+    wx.showModal({
+      title: "删除记录",
+      content: "确认删除这条记录吗？",
+      confirmColor: "#d47c86",
+      success: async (result) => {
+        if (!result.confirm) return;
+        await api.deleteRecord(id);
+        wx.showToast({ title: "已删除", icon: "success" });
+        await this.refresh();
+      }
+    });
   }
 });

@@ -1,9 +1,4 @@
 <view class="page-shell home-page">
-  <view class="row-between home-header">
-    <view class="home-title">小猫成长</view>
-    <view class="home-link" bindtap="openPets">档案</view>
-  </view>
-
   <view class="light-card hero-card">
     <view class="hero-center">
       <view class="hero-stage">
@@ -41,7 +36,7 @@
         <view class="weight-value-row">
           <view class="weight-value">{{latestWeightValue}}</view>
           <view class="weight-unit">kg</view>
-          <view class="weight-trend">{{weightTrendText}}</view>
+          <view class="weight-trend {{weightTrendClass}}">{{weightTrendText}}</view>
         </view>
       </view>
       <view class="weight-bars">
@@ -58,7 +53,7 @@
       <view class="mini-action-icon">
         <image class="mini-action-icon-image" src="/assets/icons/plus-primary.svg" mode="aspectFit" />
       </view>
-      <view class="mini-action-title">新增</view>
+      <view class="mini-action-title">疫苗/驱虫</view>
     </view>
     <view class="mini-action" bindtap="openPets">
       <view class="mini-action-icon accent">

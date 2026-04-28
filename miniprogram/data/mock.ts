@@ -75,9 +75,33 @@ export const demoRecords: PetRecord[] = [
     id: "rec_3",
     petId: "pet_mi",
     type: "weight",
-    weightKg: 3.25,
+    weightKg: 4.2,
     recordedAt: "2026-04-25",
     note: "比上次增加 0.1kg"
+  },
+  {
+    id: "rec_4",
+    petId: "pet_mi",
+    type: "weight",
+    weightKg: 4.1,
+    recordedAt: "2026-04-18",
+    note: "比上次减少 0.1kg"
+  },
+  {
+    id: "rec_5",
+    petId: "pet_mi",
+    type: "weight",
+    weightKg: 4.0,
+    recordedAt: "2026-04-11",
+    note: "比上次减少 0.1kg"
+  },
+  {
+    id: "rec_6",
+    petId: "pet_mi",
+    type: "weight",
+    weightKg: 3.9,
+    recordedAt: "2026-04-04",
+    note: "初始记录"
   }
 ];
 

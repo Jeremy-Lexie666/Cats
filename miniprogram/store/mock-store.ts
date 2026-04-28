@@ -120,7 +120,59 @@ export function listRecords(filter?: { petId?: string; type?: string }): PetReco
   return sortRecords(filtered);
 }
 
+export function getRecord(recordId: string): PetRecord | undefined {
+  const found = state.records.find((item) => item.id === recordId);
+  return found ? { ...found } : undefined;
+}
+
 export function saveRecord(draft: RecordDraft): PetRecord {
+  if ((draft as RecordDraft & { id?: string }).id) {
+    const recordId = (draft as RecordDraft & { id?: string }).id as string;
+    const existing = state.records.find((item) => item.id === recordId);
+    if (!existing) {
+      throw new Error("记录不存在");
+    }
+
+    let updated: PetRecord;
+    if (draft.type === "vaccine") {
+      updated = {
+        ...existing,
+        id: recordId,
+        petId: draft.petId,
+        type: "vaccine",
+        vaccineName: draft.vaccineName || "疫苗",
+        vaccinatedAt: draft.vaccinatedAt || "",
+        nextDueAt: draft.nextDueAt,
+        note: draft.note
+      };
+    } else if (draft.type === "deworm") {
+      updated = {
+        ...existing,
+        id: recordId,
+        petId: draft.petId,
+        type: "deworm",
+        mode: draft.mode || "internal",
+        brand: draft.brand || "",
+        executedAt: draft.executedAt || "",
+        nextDueAt: draft.nextDueAt,
+        note: draft.note
+      };
+    } else {
+      updated = {
+        ...existing,
+        id: recordId,
+        petId: draft.petId,
+        type: "weight",
+        weightKg: Number(draft.weightKg || 0),
+        recordedAt: draft.recordedAt || "",
+        note: draft.note
+      };
+    }
+
+    state.records = state.records.map((item) => (item.id === recordId ? updated : item));
+    return updated;
+  }
+
   const baseId = `rec_${Date.now()}`;
   let record: PetRecord;
 
@@ -158,6 +210,10 @@ export function saveRecord(draft: RecordDraft): PetRecord {
 
   state.records.unshift(record);
   return record;
+}
+
+export function deleteRecord(recordId: string): void {
+  state.records = state.records.filter((item) => item.id !== recordId);
 }
 
 export function listFamilyMembers(): FamilyMember[] {

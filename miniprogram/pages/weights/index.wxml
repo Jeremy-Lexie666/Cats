@@ -1,0 +1,102 @@
+<view class="page-shell weight-page">
+  <view class="light-card summary-card">
+    <view class="summary-top-row">
+      <view class="summary-action" bindtap="addWeightRecord">新增记录</view>
+    </view>
+
+    <view class="summary-main">
+      <view class="summary-label">当前体重</view>
+      <view class="summary-value-row">
+        <view class="summary-value">{{currentWeight}}</view>
+        <view class="summary-unit">kg</view>
+        <view wx:if="{{compareValue !== '--'}}" class="summary-delta {{compareDeltaClass}}">{{compareValue}}</view>
+      </view>
+      <view class="summary-tip">更新体重，持续观察成长变化</view>
+    </view>
+
+    <view class="range-switch">
+      <view
+        wx:for="{{rangeTabs}}"
+        wx:key="key"
+        class="range-tab {{selectedRange === item.key ? 'active' : ''}}"
+        data-range="{{item.key}}"
+        bindtap="switchRange"
+      >
+        {{item.label}}
+      </view>
+    </view>
+  </view>
+
+  <view class="light-card chart-card">
+    <view class="chart-title">体重趋势</view>
+    <view class="chart-layout">
+      <view class="y-axis">
+        <view class="y-axis-label">{{yAxisLabels[0]}}</view>
+        <view class="y-axis-label">{{yAxisLabels[1]}}</view>
+        <view class="y-axis-label">{{yAxisLabels[2]}}</view>
+      </view>
+
+      <view class="chart-main">
+        <view class="chart-plot">
+          <view class="grid-line line-top"></view>
+          <view class="grid-line line-mid"></view>
+          <view class="grid-line line-low"></view>
+          <view class="grid-column col-1"></view>
+          <view class="grid-column col-2"></view>
+          <view class="grid-column col-3"></view>
+
+          <view
+            wx:for="{{chartSegments}}"
+            wx:key="id"
+            class="chart-segment"
+            style="left: {{item.left}}; bottom: {{item.bottom}}; width: {{item.width}}; transform: rotate({{item.angle}});"
+          ></view>
+
+          <view
+            wx:for="{{chartPoints}}"
+            wx:key="id"
+            class="chart-point-wrap"
+            style="left: {{item.left}}; bottom: {{item.bottom}};"
+          >
+            <view class="chart-value">{{item.valueText}}</view>
+            <view class="chart-point"></view>
+          </view>
+        </view>
+
+        <view class="x-axis">
+          <view
+            wx:for="{{chartDates}}"
+            wx:key="id"
+            class="x-axis-tick"
+            style="left: {{item.left}};"
+          >
+            {{item.dateText}}
+          </view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <view class="history-head row-between">
+    <view class="history-title">历史记录</view>
+    <view class="history-count">{{historyCountText}}</view>
+  </view>
+
+  <view wx:for="{{historyItems}}" wx:key="id" class="light-card history-card">
+    <view class="history-left">
+      <view class="history-weight-row">
+        <view class="history-weight">{{item.weightText}}</view>
+        <view wx:if="{{item.deltaText}}" class="history-delta {{item.deltaClass}}">{{item.deltaText}}</view>
+      </view>
+      <view class="history-date">{{item.dateText}}</view>
+    </view>
+    <view class="history-actions">
+      <view class="history-action" data-id="{{item.id}}" bindtap="editWeight">
+        <image class="history-action-icon" src="/assets/icons/edit-strong.svg" mode="aspectFit" />
+      </view>
+      <view class="history-action danger" data-id="{{item.id}}" bindtap="deleteWeight">
+        <image class="history-action-icon" src="/assets/icons/delete-strong.svg" mode="aspectFit" />
+      </view>
+    </view>
+  </view>
+</view>

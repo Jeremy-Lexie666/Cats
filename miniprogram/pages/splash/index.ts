@@ -17,9 +17,25 @@ Page({
   async handleLogin() {
     if (this.data.loading) return;
     this.setData({ loading: true });
-    await api.loginWithWechat();
-    wx.showToast({ title: "登录成功", icon: "success" });
-    wx.redirectTo({ url: "/pages/onboarding/pet/index" });
+    try {
+      const loginResult = await new Promise<WechatMiniprogram.LoginSuccessCallbackResult>((resolve, reject) => {
+        wx.login({
+          success: resolve,
+          fail: reject
+        });
+      });
+
+      await api.loginWithWechat(loginResult.code);
+      wx.showToast({ title: "登录成功", icon: "success" });
+      wx.redirectTo({ url: "/pages/onboarding/pet/index" });
+    } catch (error) {
+      wx.showToast({
+        title: error instanceof Error ? error.message : "微信登录失败",
+        icon: "none"
+      });
+    } finally {
+      this.setData({ loading: false });
+    }
   },
   openAgreement() {
     wx.showToast({ title: "协议内容后续补充", icon: "none" });

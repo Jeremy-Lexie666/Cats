@@ -54,3 +54,16 @@
   line-height: 1.6;
   color: #827c76;
 }
+
+.join-label {
+  margin-top: 20rpx;
+  margin-bottom: 14rpx;
+  font-size: 22rpx;
+  line-height: 1.5;
+  color: #7f786f;
+  font-weight: 600;
+}
+
+.join-input {
+  margin-top: 0;
+}

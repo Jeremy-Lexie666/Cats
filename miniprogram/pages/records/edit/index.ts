@@ -9,10 +9,10 @@ function getToday() {
 
 Page({
   data: {
+    recordId: "",
     petId: "",
     selectedType: "vaccine",
-    pets: [] as Array<{ id: string; name: string }>,
-    petIndex: 0,
+    pageMode: "all",
     typeTabs: [
       { key: "vaccine", label: "疫苗" },
       { key: "deworm", label: "驱虫" },
@@ -30,38 +30,59 @@ Page({
   },
   async onLoad(options: Record<string, string>) {
     const auth = await api.getAuthState();
-    const pets = await api.listPets();
     const petId = options.petId || auth.currentPetId;
-    const petIndex = Math.max(
-      pets.findIndex((item) => item.id === petId),
-      0
-    );
+    const pageMode = options.mode || "all";
+    const recordId = options.recordId || "";
+    const selectedType =
+      pageMode === "weightOnly" ? "weight" : options.type === "deworm" ? "deworm" : "vaccine";
     this.setData({
+      recordId,
       petId,
-      selectedType: options.type || "vaccine",
-      pets: pets.map((item) => ({ id: item.id, name: item.name })),
-      petIndex
+      selectedType,
+      pageMode
     });
-  },
-  backHome() {
-    wx.switchTab({ url: "/pages/home/index" });
+
+    wx.setNavigationBarTitle({
+      title: recordId ? "编辑记录" : "新增记录"
+    });
+
+    if (recordId) {
+      const record = await api.getRecord(recordId);
+      if (!record) {
+        wx.showToast({ title: "记录不存在", icon: "none" });
+        setTimeout(() => wx.navigateBack({ delta: 1 }), 300);
+        return;
+      }
+
+      if (record.type === "vaccine") {
+        this.setData({
+          selectedType: "vaccine",
+          vaccineName: record.vaccineName,
+          vaccinatedAt: record.vaccinatedAt,
+          nextDueAt: record.nextDueAt || "",
+          note: record.note || ""
+        });
+      } else if (record.type === "deworm") {
+        this.setData({
+          selectedType: "deworm",
+          modeIndex: record.mode === "internal" ? 0 : 1,
+          brand: record.brand,
+          executedAt: record.executedAt,
+          nextDueAt: record.nextDueAt || "",
+          note: record.note || ""
+        });
+      } else {
+        this.setData({
+          selectedType: "weight",
+          weightKg: `${record.weightKg}`,
+          recordedAt: record.recordedAt,
+          note: record.note || ""
+        });
+      }
+    }
   },
   switchType(event: WechatMiniprogram.TouchEvent) {
     this.setData({ selectedType: event.currentTarget.dataset.type as string });
-  },
-  handlePetChipTap(event: WechatMiniprogram.TouchEvent) {
-    const petIndex = Number(event.currentTarget.dataset.index);
-    this.setData({
-      petIndex,
-      petId: this.data.pets[petIndex].id
-    });
-  },
-  handlePetChange(event: WechatMiniprogram.PickerChange) {
-    const petIndex = Number(event.detail.value);
-    this.setData({
-      petIndex,
-      petId: this.data.pets[petIndex].id
-    });
   },
   handleInput(event: WechatMiniprogram.Input) {
     const field = event.currentTarget.dataset.field as string;
@@ -86,20 +107,28 @@ Page({
       return;
     }
 
-    await api.saveRecord({
+    const draft = {
+      id: this.data.recordId || undefined,
       petId: this.data.petId,
       type: this.data.selectedType as "vaccine" | "deworm" | "weight",
       vaccineName: this.data.vaccineName,
       vaccinatedAt: this.data.vaccinatedAt,
       nextDueAt: this.data.nextDueAt,
-      mode: this.data.modeIndex === 0 ? "internal" : "external",
+      mode: (this.data.modeIndex === 0 ? "internal" : "external") as "internal" | "external",
       brand: this.data.brand,
       executedAt: this.data.executedAt,
       weightKg: Number(this.data.weightKg),
       recordedAt: this.data.recordedAt,
       note: this.data.note
-    });
-    wx.showToast({ title: "记录已保存", icon: "success" });
+    };
+
+    if (this.data.recordId) {
+      await api.updateRecord(this.data.recordId, draft);
+    } else {
+      await api.saveRecord(draft);
+    }
+
+    wx.showToast({ title: this.data.recordId ? "记录已更新" : "记录已保存", icon: "success" });
     setTimeout(() => wx.navigateBack({ delta: 1 }), 300);
   }
 });

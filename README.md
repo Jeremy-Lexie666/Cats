@@ -84,6 +84,126 @@ dist/miniprogram
 npm run doctor
 npm run typecheck
 npm run build:miniprogram
+npm run backend:start
+```
+
+## 本地后端
+
+项目现在已经带了一个本地 MVP 后端，位置在：
+
+```text
+backend/
+```
+
+特性：
+
+- Node 原生 `http` 服务，无额外依赖
+- 本地 JSON 持久化
+- 覆盖当前小程序需要的核心接口：
+  - 登录态
+  - 首页数据
+  - 单猫档案
+  - 疫苗 / 驱虫 / 体重记录
+  - 家庭成员
+  - 提醒设置
+  - 邀请信息
+
+### 启动后端
+
+```bash
+npm run backend:start
+```
+
+默认地址：
+
+```text
+http://127.0.0.1:8787
+```
+
+健康检查：
+
+```text
+GET /health
+```
+
+### 本地切换到真实后端
+
+当前小程序默认还是 `mock` 模式，配置在：
+
+- [miniprogram/app.ts](/Users/jeremy/Desktop/Vibe%20Coding/Codex/小猫来了/miniprogram/app.ts)
+
+如果你要切到本地后端，把：
+
+```ts
+useMock: true
+```
+
+改成：
+
+```ts
+useMock: false
+```
+
+后端基地址默认就是：
+
+```ts
+backendBaseUrl: "http://127.0.0.1:8787/api"
+```
+
+### 微信登录后端说明
+
+当前后端已经支持 `wx.login -> 后端登录接口` 这条链路：
+
+- 小程序启动页会先调用 `wx.login`
+- 然后把 `code` 发给：
+
+```text
+POST /api/auth/login/wechat
+```
+
+后端现在有两种模式：
+
+1. 开发降级模式
+
+如果没有配置微信密钥，后端会直接把当前用户标记为已登录，方便本地联调。
+
+2. 真实微信校验模式
+
+如果你启动后端前配置了下面两个环境变量：
+
+```bash
+WECHAT_APPID=你的小程序AppID
+WECHAT_APP_SECRET=你的小程序AppSecret
+```
+
+后端就会调用微信 `jscode2session` 接口校验 `wx.login` 返回的 `code`。
+
+启动示例：
+
+```bash
+WECHAT_APPID=xxx WECHAT_APP_SECRET=xxx npm run backend:start
+```
+
+### 后端数据文件
+
+初始种子数据：
+
+```text
+backend/data/seed.json
+```
+
+运行时数据：
+
+```text
+backend/data/runtime/db.json
+```
+
+运行时数据已经加入 `.gitignore`，不会污染仓库。
+
+如果你想把后端数据重置回初始状态，可以调用：
+
+```text
+POST /api/debug/reset
 ```
 
 ## 当前体验路径

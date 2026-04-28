@@ -22,7 +22,17 @@
       <view class="row-title">{{item.title}}</view>
       <view class="record-date">{{item.date}}</view>
     </view>
-    <view class="row-desc">{{item.desc}}</view>
+    <view class="record-row-bottom">
+      <view class="row-desc record-desc">{{item.desc}}</view>
+      <view class="record-actions">
+        <view class="record-action" data-id="{{item.id}}" data-type="{{item.type}}" bindtap="editRecord">
+          <image class="record-action-icon" src="/assets/icons/edit-strong.svg" mode="aspectFit" />
+        </view>
+        <view class="record-action danger" data-id="{{item.id}}" bindtap="deleteRecord">
+          <image class="record-action-icon" src="/assets/icons/delete-strong.svg" mode="aspectFit" />
+        </view>
+      </view>
+    </view>
   </view>
 
   <button class="primary-button sticky-button" bindtap="createRecord">新增记录</button>

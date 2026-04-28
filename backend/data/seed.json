@@ -1,0 +1,99 @@
+{
+  "auth": {
+    "isLoggedIn": false,
+    "currentPetId": "pet_mi",
+    "hasCompletedOnboarding": false,
+    "user": {
+      "id": "user_1",
+      "nickname": "Jeremy",
+      "avatarText": "J"
+    }
+  },
+  "pets": [
+    {
+      "id": "pet_mi",
+      "familyId": "family_1",
+      "name": "米糕",
+      "birthday": "2025-08-12",
+      "breed": "英短银渐层",
+      "gender": "female",
+      "isNeutered": false,
+      "avatarText": "米",
+      "note": "很黏人，看到逗猫棒会立刻冲过来。"
+    }
+  ],
+  "members": [
+    {
+      "id": "member_1",
+      "familyId": "family_1",
+      "displayName": "Jeremy",
+      "role": "owner",
+      "joinedAt": "2026-04-12"
+    },
+    {
+      "id": "member_2",
+      "familyId": "family_1",
+      "displayName": "家人",
+      "role": "member",
+      "joinedAt": "2026-04-15"
+    }
+  ],
+  "records": [
+    {
+      "id": "rec_1",
+      "petId": "pet_mi",
+      "type": "vaccine",
+      "vaccineName": "猫三联",
+      "vaccinatedAt": "2026-04-10",
+      "nextDueAt": "2026-05-10",
+      "note": "状态稳定"
+    },
+    {
+      "id": "rec_2",
+      "petId": "pet_mi",
+      "type": "deworm",
+      "mode": "external",
+      "brand": "大宠爱",
+      "executedAt": "2026-04-18",
+      "nextDueAt": "2026-05-18",
+      "note": "已滴完"
+    },
+    {
+      "id": "rec_3",
+      "petId": "pet_mi",
+      "type": "weight",
+      "weightKg": 4.2,
+      "recordedAt": "2026-04-25",
+      "note": "比上次增加 0.1kg"
+    },
+    {
+      "id": "rec_4",
+      "petId": "pet_mi",
+      "type": "weight",
+      "weightKg": 4.1,
+      "recordedAt": "2026-04-18",
+      "note": "比上次减少 0.1kg"
+    },
+    {
+      "id": "rec_5",
+      "petId": "pet_mi",
+      "type": "weight",
+      "weightKg": 4.0,
+      "recordedAt": "2026-04-11",
+      "note": "比上次减少 0.1kg"
+    },
+    {
+      "id": "rec_6",
+      "petId": "pet_mi",
+      "type": "weight",
+      "weightKg": 3.9,
+      "recordedAt": "2026-04-04",
+      "note": "初始记录"
+    }
+  ],
+  "reminderSettings": {
+    "vaccineEnabled": true,
+    "dewormEnabled": true,
+    "leadDays": 3
+  }
+}

@@ -1,7 +1,8 @@
 App<IAppOption>({
   globalData: {
     useMock: true,
-    cloudEnvId: "replace-with-your-cloud-env-id"
+    cloudEnvId: "replace-with-your-cloud-env-id",
+    backendBaseUrl: "http://127.0.0.1:8787/api"
   },
   onLaunch() {
     const { cloudEnvId, useMock } = this.globalData;
