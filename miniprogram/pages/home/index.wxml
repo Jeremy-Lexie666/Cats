@@ -1,0 +1,76 @@
+<view class="page-shell home-page">
+  <view class="row-between home-header">
+    <view class="home-title">小猫成长</view>
+    <view class="home-link" bindtap="openPets">档案</view>
+  </view>
+
+  <view class="light-card hero-card">
+    <view class="hero-center">
+      <view class="hero-stage">
+        <view class="hero-face">
+          <view class="hero-face-text">🐱</view>
+        </view>
+      </view>
+
+      <view class="hero-title">{{petName}}</view>
+      <view class="hero-meta">{{petAge}}</view>
+
+      <view class="hero-status">
+        <view class="hero-status-text">{{petNote}}</view>
+      </view>
+    </view>
+  </view>
+
+  <view class="light-card reminder-card" bindtap="openRecords">
+    <view class="row-between reminder-head">
+      <view class="row-title">近期提醒</view>
+      <view class="mini-link">{{reminderCountText}}</view>
+    </view>
+    <view class="reminder-list">
+      <view wx:for="{{reminderItems}}" wx:key="id" class="row-between reminder-item">
+        <view class="row-desc no-margin">{{item.label}}</view>
+        <view class="row-desc no-margin strong">{{item.dueText}}</view>
+      </view>
+    </view>
+  </view>
+
+  <view class="light-card weight-card" bindtap="openRecords">
+    <view class="row-between">
+      <view class="weight-copy">
+        <view class="row-title">最近体重</view>
+        <view class="weight-value-row">
+          <view class="weight-value">{{latestWeightValue}}</view>
+          <view class="weight-unit">kg</view>
+          <view class="weight-trend">{{weightTrendText}}</view>
+        </view>
+      </view>
+      <view class="weight-bars">
+        <view class="weight-bar h1"></view>
+        <view class="weight-bar h2"></view>
+        <view class="weight-bar h3"></view>
+        <view class="weight-bar h4"></view>
+      </view>
+    </view>
+  </view>
+
+  <view class="action-grid">
+    <view class="mini-action" bindtap="addRecord">
+      <view class="mini-action-icon">
+        <image class="mini-action-icon-image" src="/assets/icons/plus-primary.svg" mode="aspectFit" />
+      </view>
+      <view class="mini-action-title">新增</view>
+    </view>
+    <view class="mini-action" bindtap="openPets">
+      <view class="mini-action-icon accent">
+        <image class="mini-action-icon-image" src="/assets/icons/calendar-accent.svg" mode="aspectFit" />
+      </view>
+      <view class="mini-action-title">档案</view>
+    </view>
+    <view class="mini-action" bindtap="openWeight">
+      <view class="mini-action-icon secondary">
+        <image class="mini-action-icon-image" src="/assets/icons/scale-muted.svg" mode="aspectFit" />
+      </view>
+      <view class="mini-action-title">体重</view>
+    </view>
+  </view>
+</view>

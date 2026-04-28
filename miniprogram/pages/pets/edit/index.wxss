@@ -1,0 +1,18 @@
+.form-label {
+  margin: 22rpx 0 12rpx;
+  font-size: 24rpx;
+  color: #75695d;
+}
+
+.form-label:first-of-type {
+  margin-top: 0;
+}
+
+.picker-input {
+  display: flex;
+  align-items: center;
+}
+
+.sticky-button {
+  margin-top: 20rpx;
+}

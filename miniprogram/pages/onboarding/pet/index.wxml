@@ -1,0 +1,110 @@
+<view class="onboarding-page">
+  <view class="top-strip" style="padding-top: {{statusBarHeight + topHeaderGap}}px;">
+    <view class="progress-row">
+      <view class="progress-bar {{step === 0 ? 'active' : step > 0 ? 'done' : ''}}"></view>
+      <view class="progress-bar {{step === 1 ? 'active' : step > 1 ? 'done' : ''}}"></view>
+      <view class="progress-bar {{step === 2 ? 'active' : ''}}"></view>
+    </view>
+    <view class="skip-link" bindtap="skipFlow">跳过</view>
+  </view>
+
+  <view wx:if="{{step === 0}}" class="step-shell step-name">
+    <view class="heading-block">
+      <view class="step-title">给ta起个名字</view>
+      <view class="step-subtitle">一个好听的名字是陪伴的开始</view>
+    </view>
+
+    <view class="avatar-stage">
+      <view class="avatar-card">🐱</view>
+    </view>
+
+    <view class="form-block">
+      <view class="field-label">猫咪名字</view>
+      <input
+        class="step-input"
+        value="{{name}}"
+        data-field="name"
+        bindinput="handleInput"
+        placeholder="请输入猫咪名字"
+        maxlength="12"
+      />
+
+      <view class="tip-card">
+        <view class="tip-text">起个好听又好记的名字，日常呼唤会更亲切哦</view>
+      </view>
+    </view>
+  </view>
+
+  <view wx:if="{{step === 1}}" class="step-shell step-info">
+    <view class="heading-block">
+      <view class="step-title">记录重要信息</view>
+      <view class="step-subtitle">帮助你更好地照顾ta</view>
+    </view>
+
+    <view class="info-avatar-stage">
+      <view class="info-avatar-card">🐱</view>
+    </view>
+
+    <view class="name-badge">{{name || '小猫'}} 的信息</view>
+
+    <view class="form-block">
+      <view class="field-label">生日</view>
+      <picker mode="date" value="{{birthday}}" bindchange="handleBirthdayChange">
+        <view class="step-input picker-input">
+          <view class="{{birthday ? 'picker-value' : 'picker-placeholder'}}">{{birthday || '年 / 月 / 日'}}</view>
+          <view class="picker-icon">◫</view>
+        </view>
+      </picker>
+
+      <view class="field-label field-label-spaced">品种（可选）</view>
+      <input
+        class="step-input"
+        value="{{breed}}"
+        data-field="breed"
+        bindinput="handleInput"
+        placeholder="例如：橘猫、美短、英短"
+        maxlength="24"
+      />
+    </view>
+  </view>
+
+  <view wx:if="{{step === 2}}" class="step-shell step-avatar">
+    <view class="heading-block">
+      <view class="step-title">专属形象</view>
+      <view class="step-subtitle">让记录更有温度</view>
+    </view>
+
+    <view class="final-avatar-stage">
+      <view class="final-avatar-card">🐱</view>
+      <view class="final-name">{{name || '小猫'}}</view>
+      <view class="final-meta">{{ageText}} · {{breed || '品种待补充'}}</view>
+    </view>
+
+    <button class="ghost-upload-button" bindtap="uploadPhoto">上传真实照片</button>
+
+    <view class="divider-row">
+      <view class="divider-line"></view>
+      <view class="divider-text">或</view>
+      <view class="divider-line"></view>
+    </view>
+
+    <view class="ai-card">
+      <view class="ai-icon">✧</view>
+      <view class="ai-copy">
+        <view class="ai-title">AI 生成卡通形象</view>
+        <view class="ai-subtitle">生成可爱的专属头像</view>
+      </view>
+      <button class="ai-button" bindtap="generateAvatar">生成新形象</button>
+    </view>
+
+    <view class="tip-card muted-card">
+      <view class="tip-text">后续可随时在设置中更换头像</view>
+    </view>
+  </view>
+
+  <view class="bottom-bar {{step === 0 ? 'single-bottom-bar' : ''}}">
+    <button wx:if="{{step > 0}}" class="bottom-secondary" bindtap="prevStep">上一步</button>
+    <button wx:if="{{step < 2}}" class="bottom-primary {{step === 0 ? 'bottom-primary-single' : ''}}" bindtap="nextStep">下一步</button>
+    <button wx:if="{{step === 2}}" class="bottom-primary" loading="{{finishLoading}}" bindtap="finishFlow">完成</button>
+  </view>
+</view>

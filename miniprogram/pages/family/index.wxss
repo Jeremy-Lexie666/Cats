@@ -1,0 +1,41 @@
+.family-hero {
+  background: #ffffff;
+}
+
+.family-summary-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10rpx;
+  margin-top: 14rpx;
+}
+
+.family-summary-item {
+  background: #ffffff;
+  border: 1rpx solid rgba(46, 42, 39, 0.06);
+  border-radius: 18rpx;
+  padding: 14rpx 16rpx;
+}
+
+.member-row {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+}
+
+.member-avatar {
+  width: 56rpx;
+  height: 56rpx;
+  border-radius: 18rpx;
+  background: linear-gradient(180deg, #d9c8b2 0%, #c8cbc0 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #6d6660;
+  font-size: 20rpx;
+  font-weight: 700;
+}
+
+.small-pill {
+  font-size: 20rpx;
+  padding: 4rpx 12rpx;
+}

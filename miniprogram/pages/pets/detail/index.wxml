@@ -1,0 +1,77 @@
+<view class="page-shell">
+  <view class="light-card detail-hero">
+    <view class="section-eyebrow">猫咪主页</view>
+    <view class="detail-top">
+      <view class="pet-avatar">{{petAvatarText}}</view>
+      <view class="detail-main">
+        <view class="detail-name">{{petName}}</view>
+        <view class="detail-meta">{{petBreed}} · {{petAge}}</view>
+        <view class="detail-note">{{petNote}}</view>
+      </view>
+    </view>
+    <button class="secondary-button detail-button" bindtap="editPet">编辑猫咪资料</button>
+  </view>
+
+  <view class="stats-grid">
+    <view class="mini-stat">
+      <view class="mini-stat-label">最近体重</view>
+      <view class="mini-stat-value">{{latestWeight}}</view>
+    </view>
+    <view class="mini-stat">
+      <view class="mini-stat-label">下次疫苗</view>
+      <view class="mini-stat-value">{{nextVaccine}}</view>
+    </view>
+    <view class="mini-stat">
+      <view class="mini-stat-label">下次驱虫</view>
+      <view class="mini-stat-value">{{nextDeworm}}</view>
+    </view>
+  </view>
+
+  <view class="light-card">
+    <view class="row-between">
+      <view>
+        <view class="section-eyebrow">健康记录</view>
+        <view class="section-title">疫苗记录</view>
+      </view>
+      <view class="mini-link" data-type="vaccine" bindtap="addRecord">新增</view>
+    </view>
+    <view wx:for="{{vaccines}}" wx:key="title" class="list-row">
+      <view>
+        <view class="row-title">{{item.title}}</view>
+        <view class="row-desc">{{item.desc}}</view>
+      </view>
+    </view>
+  </view>
+
+  <view class="light-card">
+    <view class="row-between">
+      <view class="section-title">驱虫记录</view>
+      <view class="mini-link" data-type="deworm" bindtap="addRecord">新增</view>
+    </view>
+    <view wx:for="{{deworms}}" wx:key="title" class="list-row">
+      <view>
+        <view class="row-title">{{item.title}}</view>
+        <view class="row-desc">{{item.desc}}</view>
+      </view>
+    </view>
+  </view>
+
+  <view class="light-card">
+    <view class="row-between">
+      <view class="section-title">体重记录</view>
+      <view class="mini-link" data-type="weight" bindtap="addRecord">新增</view>
+    </view>
+    <view wx:for="{{weights}}" wx:key="title" class="list-row">
+      <view>
+        <view class="row-title">{{item.title}}</view>
+        <view class="row-desc">{{item.desc}}</view>
+      </view>
+    </view>
+  </view>
+
+  <view class="light-card">
+    <view class="section-eyebrow">后续扩展</view>
+    <view class="section-title">AI 健康分析</view>
+    <view class="row-desc">入口已预留，后续会根据品种、年龄、体重和记录节奏给出轻量分析。</view>
+  </view>
+</view>

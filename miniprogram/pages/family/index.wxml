@@ -1,0 +1,33 @@
+<view class="page-shell">
+  <view class="light-card family-hero">
+    <view class="section-eyebrow">家庭共享</view>
+    <view class="section-title">一起看猫咪情况</view>
+    <view class="row-desc">管理员负责发起邀请，家人收到邀请卡片后，用自己的微信打开并加入同一个家庭空间。</view>
+    <view class="family-summary-row">
+      <view class="family-summary-item">
+        <view class="mini-stat-label">成员协作</view>
+        <view class="mini-stat-value">同步查看</view>
+      </view>
+      <view class="family-summary-item">
+        <view class="mini-stat-label">邀请方式</view>
+        <view class="mini-stat-value">邀请卡片</view>
+      </view>
+    </view>
+    <button class="primary-button sticky-button" bindtap="openInvite">去邀请家人</button>
+  </view>
+
+  <view class="light-card">
+    <view class="section-eyebrow">成员列表</view>
+    <view class="section-title">当前家庭成员</view>
+    <view wx:for="{{members}}" wx:key="id" class="list-row">
+      <view class="member-row">
+        <view class="member-avatar">{{item.avatarText}}</view>
+        <view>
+          <view class="row-title">{{item.name}}</view>
+          <view class="row-desc">加入于 {{item.joinedAt}}</view>
+        </view>
+      </view>
+      <view class="pill small-pill">{{item.role}}</view>
+    </view>
+  </view>
+</view>

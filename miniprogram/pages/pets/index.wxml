@@ -1,0 +1,39 @@
+<view class="page-shell">
+  <view class="light-card pet-hero">
+    <view class="section-eyebrow">猫咪档案</view>
+    <view class="section-title">先把这一只小猫照顾好</view>
+    <view class="row-desc">当前先用单猫模式管理档案、健康记录和提醒，后面如果需要再扩展多猫。</view>
+  </view>
+
+  <view class="light-card pet-card" bindtap="openDetail">
+    <view class="pet-avatar-shell">
+      <view class="pet-avatar">🐱</view>
+    </view>
+    <view class="pet-main">
+      <view class="pet-topline">
+        <view class="pet-name">{{petName}}</view>
+        <view class="pet-age">{{age}}</view>
+      </view>
+      <view class="pet-meta">{{breed}}</view>
+      <view class="pet-note">进入后可查看疫苗、驱虫、体重和基础资料</view>
+    </view>
+  </view>
+
+  <view class="action-row">
+    <view class="slim-card action-card" bindtap="openDetail">
+      <view>
+        <view class="row-title">查看完整档案</view>
+        <view class="row-desc no-margin">进入详情页查看全部记录</view>
+      </view>
+      <view class="slim-action">查看</view>
+    </view>
+
+    <view class="slim-card action-card" bindtap="openEdit">
+      <view>
+        <view class="row-title">编辑基础资料</view>
+        <view class="row-desc no-margin">修改生日、品种、性别等信息</view>
+      </view>
+      <view class="slim-action">编辑</view>
+    </view>
+  </view>
+</view>

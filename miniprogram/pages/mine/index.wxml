@@ -1,0 +1,68 @@
+<view class="page-shell">
+  <view class="mine-title">我的</view>
+
+  <view class="light-card profile-card">
+    <view class="profile-head">
+      <view class="profile-avatar">👤</view>
+      <view class="profile-main">
+        <view class="profile-name">{{nickname}}</view>
+        <view class="profile-desc">微信登录中</view>
+      </view>
+    </view>
+  </view>
+
+  <view class="light-card menu-card">
+    <view class="entry-row" bindtap="openFamily">
+      <view class="entry-icon primary">家</view>
+      <view class="entry-copy">
+        <view class="row-title">家庭成员</view>
+        <view class="row-desc">2名成员</view>
+      </view>
+      <view class="entry-arrow">›</view>
+    </view>
+    <view class="entry-row" bindtap="openReminders">
+      <view class="entry-icon accent">铃</view>
+      <view class="entry-copy">
+        <view class="row-title">提醒设置</view>
+      </view>
+      <view class="entry-arrow">›</view>
+    </view>
+    <view class="entry-row no-border" bindtap="openInvite">
+      <view class="entry-icon secondary">机</view>
+      <view class="entry-copy">
+        <view class="row-title">邀请卡片</view>
+        <view class="row-desc">分享给家人加入家庭</view>
+      </view>
+      <view class="entry-arrow">›</view>
+    </view>
+  </view>
+
+  <view class="light-card menu-card">
+    <view class="entry-row">
+      <view class="entry-icon accent">心</view>
+      <view class="entry-copy">
+        <view class="row-title">关于产品</view>
+        <view class="row-desc">版本 1.0.0</view>
+      </view>
+      <view class="entry-arrow">›</view>
+    </view>
+    <view class="entry-row">
+      <view class="entry-icon secondary">聊</view>
+      <view class="entry-copy">
+        <view class="row-title">意见反馈</view>
+      </view>
+      <view class="entry-arrow">›</view>
+    </view>
+    <view class="entry-row no-border">
+      <view class="entry-icon muted">协</view>
+      <view class="entry-copy">
+        <view class="row-title">用户协议与隐私</view>
+      </view>
+      <view class="entry-arrow">›</view>
+    </view>
+  </view>
+
+  <button class="logout-button" loading="{{logoutLoading}}" bindtap="handleLogout">退出登录</button>
+
+  <view class="mine-footer">用爱记录每一天</view>
+</view>

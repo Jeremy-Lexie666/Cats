@@ -1,0 +1,29 @@
+<view class="page-shell">
+  <view class="light-card record-hero">
+    <view class="section-eyebrow">记录中心</view>
+    <view class="section-title">把 {{petName}} 的重要变化记下来</view>
+    <view class="row-desc">当前先按类型筛选，重点覆盖疫苗、驱虫和体重记录。</view>
+  </view>
+
+  <view class="chip-row">
+    <view
+      wx:for="{{typeTabs}}"
+      wx:key="key"
+      class="pet-chip {{filterType === item.key ? 'active' : ''}}"
+      data-type="{{item.key}}"
+      bindtap="switchType"
+    >
+      {{item.label}}
+    </view>
+  </view>
+
+  <view wx:for="{{recordItems}}" wx:key="id" class="light-card record-card">
+    <view class="row-between">
+      <view class="row-title">{{item.title}}</view>
+      <view class="record-date">{{item.date}}</view>
+    </view>
+    <view class="row-desc">{{item.desc}}</view>
+  </view>
+
+  <button class="primary-button sticky-button" bindtap="createRecord">新增记录</button>
+</view>

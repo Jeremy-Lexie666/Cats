@@ -1,0 +1,65 @@
+<view class="page-shell">
+  <view class="section-header">
+    <view class="back-button" bindtap="backHome">‹</view>
+    <view class="section-title center-title">新增记录</view>
+    <view class="back-placeholder"></view>
+  </view>
+
+  <view class="type-switch">
+    <view
+      wx:for="{{typeTabs}}"
+      wx:key="key"
+      class="type-tab {{selectedType === item.key ? 'active' : ''}}"
+      data-type="{{item.key}}"
+      bindtap="switchType"
+    >
+      <view class="type-icon">{{item.key === 'vaccine' ? '疫' : item.key === 'deworm' ? '驱' : '重'}}</view>
+      {{item.label}}
+    </view>
+  </view>
+
+  <view class="record-cat-row">
+    <view
+      wx:for="{{pets}}"
+      wx:key="id"
+      class="record-cat-chip {{petIndex === index ? 'active' : ''}}"
+      data-index="{{index}}"
+      bindtap="handlePetChipTap"
+    >
+      {{item.name}}
+    </view>
+  </view>
+
+  <view class="form-stack">
+    <block wx:if="{{selectedType === 'vaccine'}}">
+      <view class="form-label">疫苗名称</view>
+      <input class="input" value="{{vaccineName}}" data-field="vaccineName" bindinput="handleInput" placeholder="例如猫三联" />
+      <view class="form-label">接种日期</view>
+      <input class="input" value="{{vaccinatedAt}}" data-field="vaccinatedAt" bindinput="handleInput" placeholder="YYYY-MM-DD" />
+      <view class="form-label">下次提醒日期</view>
+      <input class="input" value="{{nextDueAt}}" data-field="nextDueAt" bindinput="handleInput" placeholder="YYYY-MM-DD" />
+    </block>
+
+    <block wx:if="{{selectedType === 'deworm'}}">
+      <view class="form-label">驱虫类型</view>
+      <picker mode="selector" range="{{['体内','体外']}}" value="{{modeIndex}}" bindchange="handleModeChange">
+        <view class="input picker-input">{{modeIndex === 0 ? '体内' : '体外'}}</view>
+      </picker>
+      <view class="form-label">品牌</view>
+      <input class="input" value="{{brand}}" data-field="brand" bindinput="handleInput" placeholder="例如大宠爱" />
+      <view class="form-label">执行日期</view>
+      <input class="input" value="{{executedAt}}" data-field="executedAt" bindinput="handleInput" placeholder="YYYY-MM-DD" />
+      <view class="form-label">下次提醒日期</view>
+      <input class="input" value="{{nextDueAt}}" data-field="nextDueAt" bindinput="handleInput" placeholder="YYYY-MM-DD" />
+    </block>
+
+    <block wx:if="{{selectedType === 'weight'}}">
+      <view class="form-label">体重</view>
+      <input class="input" value="{{weightKg}}" data-field="weightKg" bindinput="handleInput" placeholder="例如 3.25" />
+      <view class="form-label">记录日期</view>
+      <input class="input" value="{{recordedAt}}" data-field="recordedAt" bindinput="handleInput" placeholder="YYYY-MM-DD" />
+    </block>
+  </view>
+
+  <button class="primary-button sticky-button" bindtap="saveRecord">保存记录</button>
+</view>

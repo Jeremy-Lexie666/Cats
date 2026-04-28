@@ -1,0 +1,13 @@
+{
+  "extends": "./tsconfig.miniprogram.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "outDir": "dist/miniprogram",
+    "module": "CommonJS",
+    "moduleResolution": "Node",
+    "target": "ES2019"
+  },
+  "include": [
+    "miniprogram/**/*.ts"
+  ]
+}

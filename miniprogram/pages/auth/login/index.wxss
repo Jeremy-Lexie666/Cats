@@ -1,0 +1,12 @@
+.login-redirect {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fdfcfb;
+}
+
+.login-redirect-text {
+  font-size: 24rpx;
+  color: #8c837b;
+}

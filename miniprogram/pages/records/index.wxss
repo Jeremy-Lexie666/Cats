@@ -1,0 +1,17 @@
+.record-hero {
+  margin-bottom: 16rpx;
+}
+
+.compact-row {
+  margin-top: 10rpx;
+}
+
+.record-card + .record-card {
+  margin-top: 14rpx;
+}
+
+.record-date {
+  font-size: 22rpx;
+  line-height: 1.5;
+  color: #8b857f;
+}

@@ -1,0 +1,38 @@
+.detail-hero {
+  background:
+    radial-gradient(circle at top right, rgba(246, 224, 200, 0.84) 0, rgba(246, 224, 200, 0) 32%),
+    rgba(255, 251, 246, 0.98);
+}
+
+.detail-top {
+  display: flex;
+  gap: 20rpx;
+  margin-top: 12rpx;
+}
+
+.detail-main {
+  flex: 1;
+}
+
+.detail-name {
+  font-size: 36rpx;
+  font-weight: 700;
+  color: #2d352f;
+}
+
+.detail-meta {
+  margin-top: 8rpx;
+  font-size: 24rpx;
+  color: #86776b;
+}
+
+.detail-note {
+  margin-top: 14rpx;
+  font-size: 24rpx;
+  line-height: 1.65;
+  color: #675d54;
+}
+
+.detail-button {
+  margin-top: 20rpx;
+}

@@ -1,0 +1,253 @@
+page {
+  min-height: 100%;
+  background: #fdfcfb;
+  color: #2e2a27;
+  font-family: "PingFang SC", "Hiragino Sans GB", "Helvetica Neue", sans-serif;
+}
+
+button {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 0;
+}
+
+.page-shell {
+  padding: 24rpx 22rpx 54rpx;
+}
+
+.light-card {
+  background: rgba(255, 255, 255, 0.98);
+  border: 1rpx solid rgba(46, 42, 39, 0.06);
+  border-radius: 24rpx;
+  padding: 24rpx;
+  box-shadow: none;
+}
+
+.light-card + .light-card {
+  margin-top: 16rpx;
+}
+
+.slim-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 22rpx;
+  background: rgba(255, 255, 255, 0.98);
+  border: 1rpx solid rgba(46, 42, 39, 0.06);
+  border-radius: 24rpx;
+  padding: 22rpx 24rpx;
+}
+
+.section-title {
+  font-size: 32rpx;
+  line-height: 1.35;
+  font-weight: 700;
+  color: #2e2a27;
+}
+
+.section-eyebrow {
+  font-size: 22rpx;
+  color: #9fb4a8;
+  letter-spacing: 1.2rpx;
+  font-weight: 700;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 8rpx 16rpx;
+  border-radius: 999rpx;
+  background: rgba(159, 180, 168, 0.12);
+  color: #72857b;
+  font-size: 22rpx;
+  font-weight: 700;
+}
+
+.primary-button {
+  height: 84rpx;
+  border-radius: 999rpx;
+  border: none;
+  background: #d4a574;
+  color: #fff;
+  font-size: 28rpx;
+  letter-spacing: 0.4rpx;
+  font-weight: 700;
+}
+
+.secondary-button {
+  height: 80rpx;
+  border-radius: 999rpx;
+  border: 1rpx solid rgba(46, 42, 39, 0.06);
+  background: #ffffff;
+  color: #6f6a65;
+  font-size: 26rpx;
+  font-weight: 600;
+}
+
+.input,
+.textarea {
+  width: 100%;
+  box-sizing: border-box;
+  background: #ffffff;
+  border: 1rpx solid rgba(46, 42, 39, 0.06);
+  border-radius: 20rpx;
+  color: #2e2a27;
+  font-size: 28rpx;
+}
+
+.input {
+  min-height: 86rpx;
+  padding: 0 22rpx;
+}
+
+.textarea {
+  min-height: 184rpx;
+  padding: 20rpx 22rpx;
+}
+
+.top-title {
+  margin-top: 16rpx;
+  font-size: 44rpx;
+  font-weight: 700;
+  line-height: 1.28;
+  color: #2e2a27;
+}
+
+.top-subtitle {
+  margin-top: 14rpx;
+  font-size: 24rpx;
+  line-height: 1.75;
+  color: #6f6a65;
+}
+
+.row-between {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20rpx;
+}
+
+.mini-link {
+  color: #d4a574;
+  font-size: 24rpx;
+  font-weight: 700;
+}
+
+.slim-label,
+.mini-stat-label {
+  font-size: 22rpx;
+  color: #918b85;
+}
+
+.slim-value,
+.mini-stat-value {
+  margin-top: 8rpx;
+  font-size: 26rpx;
+  font-weight: 700;
+  color: #2e2a27;
+}
+
+.slim-desc {
+  margin-top: 8rpx;
+  font-size: 22rpx;
+  line-height: 1.65;
+  color: #7a746e;
+}
+
+.slim-action {
+  color: #d4a574;
+  font-size: 22rpx;
+  font-weight: 700;
+}
+
+.mini-stat {
+  background: rgba(255, 255, 255, 0.96);
+  border: 1rpx solid rgba(46, 42, 39, 0.06);
+  border-radius: 20rpx;
+  padding: 18rpx 20rpx;
+}
+
+.soft-divider {
+  height: 1rpx;
+  background: rgba(46, 42, 39, 0.06);
+  margin: 18rpx 0;
+}
+
+.list-row,
+.entry-row {
+  padding: 18rpx 0;
+  border-bottom: 1rpx solid rgba(46, 42, 39, 0.06);
+}
+
+.no-border {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
+.row-title {
+  font-size: 26rpx;
+  line-height: 1.4;
+  font-weight: 700;
+  color: #2e2a27;
+}
+
+.row-desc {
+  margin-top: 8rpx;
+  font-size: 22rpx;
+  line-height: 1.75;
+  color: #78726c;
+}
+
+.chip-row {
+  display: flex;
+  gap: 14rpx;
+  overflow-x: auto;
+  white-space: nowrap;
+}
+
+.pet-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10rpx 18rpx;
+  border-radius: 999rpx;
+  background: #ffffff;
+  border: 1rpx solid rgba(46, 42, 39, 0.06);
+  color: #807a74;
+  font-size: 22rpx;
+}
+
+.pet-chip.active {
+  background: rgba(212, 165, 116, 0.12);
+  color: #b48a5f;
+  border-color: rgba(212, 165, 116, 0.22);
+}
+
+.sticky-button {
+  margin-top: 18rpx;
+}
+
+@keyframes floaty {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8rpx);
+  }
+}
+
+@keyframes pulseGlow {
+  0%,
+  100% {
+    opacity: 0.85;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.04);
+  }
+}

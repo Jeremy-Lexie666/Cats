@@ -1,0 +1,15 @@
+<view class="tab-shell">
+  <view class="tab-bar">
+    <view
+      wx:for="{{tabs}}"
+      wx:key="key"
+      class="tab-item {{selected === item.key ? 'active' : ''}}"
+      data-path="{{item.path}}"
+      data-key="{{item.key}}"
+      bindtap="switchTab"
+    >
+      <image class="tab-icon-image" src="{{selected === item.key ? item.activeIcon : item.inactiveIcon}}" mode="aspectFit" />
+      <view class="tab-label">{{item.label}}</view>
+    </view>
+  </view>
+</view>

@@ -1,0 +1,33 @@
+<view class="page-shell">
+  <view class="light-card">
+    <view class="entry-row">
+      <view>
+        <view class="row-title">疫苗提醒</view>
+        <view class="row-desc">快到疫苗时间前提醒你</view>
+      </view>
+      <switch checked="{{vaccineEnabled}}" data-field="vaccineEnabled" bindchange="handleSwitch" color="#c37449" />
+    </view>
+    <view class="entry-row no-border">
+      <view>
+        <view class="row-title">驱虫提醒</view>
+        <view class="row-desc">支持体内和体外驱虫提醒</view>
+      </view>
+      <switch checked="{{dewormEnabled}}" data-field="dewormEnabled" bindchange="handleSwitch" color="#c37449" />
+    </view>
+  </view>
+
+  <view class="light-card">
+    <view class="section-title">提前提醒时间</view>
+    <view class="chip-row">
+      <view
+        wx:for="{{leadDayOptions}}"
+        wx:key="*this"
+        class="pet-chip {{leadDays === item ? 'active' : ''}}"
+        data-days="{{item}}"
+        bindtap="selectLeadDay"
+      >
+        提前 {{item}} 天
+      </view>
+    </view>
+  </view>
+</view>
