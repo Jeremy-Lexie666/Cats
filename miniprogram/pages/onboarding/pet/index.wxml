@@ -52,11 +52,11 @@
       <picker mode="date" value="{{birthday}}" bindchange="handleBirthdayChange">
         <view class="step-input picker-input">
           <view class="picker-date-display {{birthday ? 'picker-value' : 'picker-placeholder'}}">
-            <text>{{birthdayYear}}</text>
+            <view class="picker-date-part">{{birthdayYear}}</view>
             <text class="picker-divider">/</text>
-            <text>{{birthdayMonth}}</text>
+            <view class="picker-date-part">{{birthdayMonth}}</view>
             <text class="picker-divider">/</text>
-            <text>{{birthdayDay}}</text>
+            <view class="picker-date-part">{{birthdayDay}}</view>
           </view>
           <view class="picker-icon">◫</view>
         </view>

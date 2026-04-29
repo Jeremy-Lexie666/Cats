@@ -155,11 +155,24 @@
 .picker-date-display {
   display: flex;
   align-items: center;
-  gap: 18rpx;
+  gap: 20rpx;
+}
+
+.picker-date-part {
+  min-width: 110rpx;
+  height: 60rpx;
+  padding: 0 16rpx;
+  border-radius: 18rpx;
+  background: #faf8f6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
 }
 
 .picker-divider {
   color: #c3bbb4;
+  font-size: 26rpx;
 }
 
 .picker-placeholder {

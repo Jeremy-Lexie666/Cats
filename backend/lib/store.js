@@ -149,10 +149,13 @@ function normalizeSnapshot(rawSnapshot, options = {}) {
     user: { id: "", nickname: "", avatarText: "" }
   };
   const pets = Array.isArray(rawSnapshot.pets) ? rawSnapshot.pets : [];
+  const hasExplicitFamilies = Array.isArray(rawSnapshot.families);
+  const hasExplicitUsers = Array.isArray(rawSnapshot.users);
+  const hasExplicitFamilyReminderSettings = Array.isArray(rawSnapshot.familyReminderSettings);
   const legacyFamilyId = pets[0]?.familyId || "family_1";
   const legacyInviteCode = "CAT-2026";
   const families =
-    Array.isArray(rawSnapshot.families) && rawSnapshot.families.length
+    hasExplicitFamilies
       ? rawSnapshot.families
       : [
           {
@@ -164,7 +167,7 @@ function normalizeSnapshot(rawSnapshot, options = {}) {
         ];
 
   const users =
-    Array.isArray(rawSnapshot.users) && rawSnapshot.users.length
+    hasExplicitUsers
       ? rawSnapshot.users
       : [
           {
@@ -185,7 +188,7 @@ function normalizeSnapshot(rawSnapshot, options = {}) {
   }));
 
   const familyReminderSettings =
-    Array.isArray(rawSnapshot.familyReminderSettings) && rawSnapshot.familyReminderSettings.length
+    hasExplicitFamilyReminderSettings
       ? rawSnapshot.familyReminderSettings
       : families.map((family) => ({
           familyId: family.id,

@@ -10,7 +10,9 @@
       <view class="hero-title">{{petName}}</view>
       <view class="hero-meta-row">
         <view class="hero-meta">{{petAge}}</view>
-        <view wx:if="{{petGenderText}}" class="gender-badge {{petGenderClass}}">{{petGenderText}}</view>
+        <view wx:if="{{petGenderText}}" class="gender-badge {{petGenderClass}}">
+          <view class="gender-badge-icon">{{petGenderText}}</view>
+        </view>
       </view>
 
       <view class="hero-status">
