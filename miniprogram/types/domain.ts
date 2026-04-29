@@ -13,6 +13,8 @@ export interface AuthState {
   currentPetId: string;
   hasCompletedOnboarding: boolean;
   user: UserProfile;
+  sessionToken?: string;
+  sessionExpiresAt?: string;
 }
 
 export interface PetProfile {

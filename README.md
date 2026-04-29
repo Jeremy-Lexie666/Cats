@@ -120,6 +120,12 @@ npm run backend:start
 http://127.0.0.1:8787
 ```
 
+本地管理后台地址：
+
+```text
+http://127.0.0.1:8787/admin
+```
+
 健康检查：
 
 ```text
@@ -184,6 +190,22 @@ WECHAT_APP_SECRET=你的小程序AppSecret
 WECHAT_APPID=xxx WECHAT_APP_SECRET=xxx npm run backend:start
 ```
 
+### 当前登录态机制
+
+现在本地后端已经加了一个轻量 session 机制：
+
+- 登录成功后，后端会返回 `sessionToken`
+- 同时会返回 `sessionExpiresAt`
+- 小程序会把 token 存到本地 storage
+- 后续请求会自动通过 `Authorization: Bearer <token>` 带上
+- 当 session 快到期时，小程序会自动调用 `/api/auth/refresh` 续期
+- 登出或接口返回 `401` 时，小程序会自动清掉本地 token
+
+这意味着：
+
+- 现在已经不是单纯依赖内存里的“已登录标记”
+- 后续切数据库、云开发、正式鉴权时，这层前端结构可以直接复用
+
 ### 后端数据文件
 
 初始种子数据：
@@ -205,6 +227,8 @@ backend/data/runtime/db.json
 ```text
 POST /api/debug/reset
 ```
+
+也可以直接在本地管理后台点“重置测试数据”按钮。
 
 ## 当前体验路径
 

@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>小猫来了后台</title>
+    <link rel="stylesheet" href="/admin/styles.css" />
+  </head>
+  <body>
+    <div class="page">
+      <header class="hero">
+        <div>
+          <div class="eyebrow">本地管理后台</div>
+          <h1>小猫来了数据面板</h1>
+          <p>用于开发和联调时查看登录态、猫咪、家庭成员和健康记录。</p>
+        </div>
+        <div class="hero-actions">
+          <button id="refreshBtn" class="secondary">刷新数据</button>
+          <button id="resetBtn" class="primary">重置测试数据</button>
+        </div>
+      </header>
+
+      <section class="metrics" id="metrics"></section>
+
+      <section class="panel">
+        <div class="panel-head">
+          <div>
+            <div class="section-label">当前状态</div>
+            <h2>登录态与提醒</h2>
+          </div>
+          <div class="timestamp" id="timestamp">--</div>
+        </div>
+        <div class="status-grid">
+          <div class="status-card" id="authCard"></div>
+          <div class="status-card" id="reminderCard"></div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head">
+          <div>
+            <div class="section-label">会话列表</div>
+            <h2>Sessions</h2>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Token</th>
+                <th>用户</th>
+                <th>Identity Hint</th>
+                <th>创建时间</th>
+                <th>过期时间</th>
+              </tr>
+            </thead>
+            <tbody id="sessionsBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head">
+          <div>
+            <div class="section-label">家庭成员</div>
+            <h2>Members</h2>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>成员ID</th>
+                <th>称呼</th>
+                <th>角色</th>
+                <th>家庭ID</th>
+                <th>加入时间</th>
+              </tr>
+            </thead>
+            <tbody id="membersBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head">
+          <div>
+            <div class="section-label">猫咪档案</div>
+            <h2>Pets</h2>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>猫咪ID</th>
+                <th>名字</th>
+                <th>品种</th>
+                <th>生日</th>
+                <th>性别</th>
+                <th>绝育</th>
+                <th>家庭ID</th>
+              </tr>
+            </thead>
+            <tbody id="petsBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head">
+          <div>
+            <div class="section-label">健康记录</div>
+            <h2>Records</h2>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>记录ID</th>
+                <th>猫咪ID</th>
+                <th>类型</th>
+                <th>主信息</th>
+                <th>日期</th>
+                <th>下次提醒</th>
+                <th>备注</th>
+              </tr>
+            </thead>
+            <tbody id="recordsBody"></tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+
+    <script src="/admin/app.js"></script>
+  </body>
+  </html>

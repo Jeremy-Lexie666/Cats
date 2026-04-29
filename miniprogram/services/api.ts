@@ -11,6 +11,9 @@ import type {
   ReminderSettings
 } from "../types/domain";
 
+const SESSION_STORAGE_KEY = "xiaomaolaile_session_token";
+const SESSION_REFRESH_WINDOW_MS = 24 * 60 * 60 * 1000;
+
 function getAppConfig() {
   const app = getApp<IAppOption>();
   return app.globalData;
@@ -24,23 +27,64 @@ function getBackendBaseUrl(): string {
   return getAppConfig().backendBaseUrl.replace(/\/$/, "");
 }
 
+function getSessionToken(): string {
+  try {
+    return wx.getStorageSync(SESSION_STORAGE_KEY) || "";
+  } catch {
+    return "";
+  }
+}
+
+function saveSessionToken(token?: string) {
+  try {
+    if (token) {
+      wx.setStorageSync(SESSION_STORAGE_KEY, token);
+      return;
+    }
+    wx.removeStorageSync(SESSION_STORAGE_KEY);
+  } catch {
+    // ignore local storage failure in development
+  }
+}
+
+function attachSession<T extends AuthState>(auth: T): T {
+  if (auth.sessionToken) {
+    saveSessionToken(auth.sessionToken);
+  } else if (!auth.isLoggedIn) {
+    saveSessionToken("");
+  }
+  return auth;
+}
+
+function isSessionExpiringSoon(expiresAt?: string): boolean {
+  if (!expiresAt) return false;
+  const expiresAtMs = new Date(expiresAt).getTime();
+  if (Number.isNaN(expiresAtMs)) return false;
+  return expiresAtMs - Date.now() <= SESSION_REFRESH_WINDOW_MS;
+}
+
 function request<T>(
   method: "GET" | "POST",
   path: string,
   data?: Record<string, unknown> | RecordDraft | PetDraft | ReminderSettings
 ): Promise<T> {
   return new Promise((resolve, reject) => {
+    const sessionToken = getSessionToken();
     wx.request({
       url: `${getBackendBaseUrl()}${path}`,
       method,
       data,
       header: {
-        "content-type": "application/json"
+        "content-type": "application/json",
+        ...(sessionToken ? { Authorization: `Bearer ${sessionToken}` } : {})
       },
       success: (response) => {
         if (response.statusCode >= 200 && response.statusCode < 300) {
           resolve(response.data as T);
           return;
+        }
+        if (response.statusCode === 401) {
+          saveSessionToken("");
         }
         const message =
           typeof response.data === "object" && response.data && "message" in response.data
@@ -58,22 +102,34 @@ function request<T>(
 export const api = {
   async getAuthState(): Promise<AuthState> {
     if (isMockMode()) return Promise.resolve(store.getAuthState());
-    return request<AuthState>("GET", "/auth/state");
+    const auth = attachSession(await request<AuthState>("GET", "/auth/state"));
+    if (auth.isLoggedIn && auth.sessionToken && isSessionExpiringSoon(auth.sessionExpiresAt)) {
+      return this.refreshSession();
+    }
+    return auth;
   },
   async loginWithWechat(code?: string): Promise<AuthState> {
     if (isMockMode()) return Promise.resolve(store.loginWithWechat());
-    return request<AuthState>("POST", "/auth/login/wechat", {
+    const auth = await request<AuthState>("POST", "/auth/login/wechat", {
       code: code || "",
       source: "miniprogram"
     });
+    return attachSession(auth);
   },
   async logout(): Promise<AuthState> {
     if (isMockMode()) return Promise.resolve(store.logout());
-    return request<AuthState>("POST", "/auth/logout");
+    const auth = await request<AuthState>("POST", "/auth/logout");
+    return attachSession(auth);
   },
   async completeOnboarding(): Promise<AuthState> {
     if (isMockMode()) return Promise.resolve(store.completeOnboarding());
-    return request<AuthState>("POST", "/auth/complete-onboarding");
+    const auth = await request<AuthState>("POST", "/auth/complete-onboarding");
+    return attachSession(auth);
+  },
+  async refreshSession(): Promise<AuthState> {
+    if (isMockMode()) return Promise.resolve(store.getAuthState());
+    const auth = await request<AuthState>("POST", "/auth/refresh");
+    return attachSession(auth);
   },
   async getHomeData(): Promise<HomeData> {
     if (isMockMode()) return Promise.resolve(store.getHomeData());
