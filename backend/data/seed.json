@@ -10,6 +10,25 @@
     }
   },
   "sessions": [],
+  "users": [
+    {
+      "id": "user_1",
+      "identityHint": "legacy-user_1",
+      "nickname": "Jeremy",
+      "avatarText": "J",
+      "familyId": "family_1",
+      "currentPetId": "pet_mi",
+      "hasCompletedOnboarding": true
+    }
+  ],
+  "families": [
+    {
+      "id": "family_1",
+      "name": "米糕的家庭",
+      "inviteCode": "CAT-2026",
+      "createdAt": "2026-04-12"
+    }
+  ],
   "pets": [
     {
       "id": "pet_mi",
@@ -26,6 +45,7 @@
   "members": [
     {
       "id": "member_1",
+      "userId": "user_1",
       "familyId": "family_1",
       "displayName": "Jeremy",
       "role": "owner",
@@ -37,6 +57,14 @@
       "displayName": "家人",
       "role": "member",
       "joinedAt": "2026-04-15"
+    }
+  ],
+  "familyReminderSettings": [
+    {
+      "familyId": "family_1",
+      "vaccineEnabled": true,
+      "dewormEnabled": true,
+      "leadDays": 3
     }
   ],
   "records": [
@@ -91,10 +119,5 @@
       "recordedAt": "2026-04-04",
       "note": "初始记录"
     }
-  ],
-  "reminderSettings": {
-    "vaccineEnabled": true,
-    "dewormEnabled": true,
-    "leadDays": 3
-  }
+  ]
 }

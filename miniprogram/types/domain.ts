@@ -85,7 +85,7 @@ export interface HomeReminder {
 }
 
 export interface HomeData {
-  currentPet: PetProfile;
+  currentPet?: PetProfile;
   reminder?: HomeReminder;
   latestWeight?: WeightRecord;
   latestRecord?: PetRecord;

@@ -15,6 +15,17 @@ const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "";
 const SESSION_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 const ADMIN_DIR = path.join(__dirname, "admin");
 
+const EMPTY_AUTH_STATE = {
+  isLoggedIn: false,
+  currentPetId: "",
+  hasCompletedOnboarding: false,
+  user: {
+    id: "",
+    nickname: "",
+    avatarText: ""
+  }
+};
+
 function getDaysLeft(dateLike, now = new Date()) {
   if (!dateLike) return Number.POSITIVE_INFINITY;
   const date = new Date(dateLike);
@@ -34,14 +45,50 @@ function sortRecords(records) {
   return [...records].sort((a, b) => getRecordDate(b).localeCompare(getRecordDate(a)));
 }
 
-function getCurrentPet(db) {
-  return db.pets.find((item) => item.id === db.auth.currentPetId) || db.pets[0];
+function getUserById(db, userId) {
+  return (db.users || []).find((item) => item.id === userId);
+}
+
+function getUserByIdentityHint(db, identityHint) {
+  return (db.users || []).find((item) => item.identityHint === identityHint);
+}
+
+function getFamilyById(db, familyId) {
+  return (db.families || []).find((item) => item.id === familyId);
+}
+
+function getFamilyPets(db, familyId) {
+  return (db.pets || []).filter((item) => item.familyId === familyId);
+}
+
+function getFamilyMembers(db, familyId) {
+  return (db.members || []).filter((item) => item.familyId === familyId);
+}
+
+function getFamilyRecords(db, familyId) {
+  const petIds = new Set(getFamilyPets(db, familyId).map((item) => item.id));
+  return (db.records || []).filter((item) => petIds.has(item.petId));
+}
+
+function getCurrentPetForUser(db, user) {
+  if (!user) return undefined;
+  const pets = getFamilyPets(db, user.familyId);
+  return pets.find((item) => item.id === user.currentPetId) || pets[0];
+}
+
+function getReminderSettingsForFamily(db, familyId) {
+  return (
+    (db.familyReminderSettings || []).find((item) => item.familyId === familyId) || {
+      familyId,
+      vaccineEnabled: true,
+      dewormEnabled: true,
+      leadDays: 3
+    }
+  );
 }
 
 function getLatestWeight(records) {
-  return records
-    .filter((item) => item.type === "weight")
-    .sort((a, b) => b.recordedAt.localeCompare(a.recordedAt))[0];
+  return records.filter((item) => item.type === "weight").sort((a, b) => b.recordedAt.localeCompare(a.recordedAt))[0];
 }
 
 function getLatestRecord(records) {
@@ -49,6 +96,7 @@ function getLatestRecord(records) {
 }
 
 function getUpcomingReminder(pet, records) {
+  if (!pet) return undefined;
   return records
     .filter((item) => item.type === "vaccine" || item.type === "deworm")
     .map((item) => ({
@@ -104,7 +152,7 @@ function getBasicAuthCredentials(req) {
       username: decoded.slice(0, separatorIndex),
       password: decoded.slice(separatorIndex + 1)
     };
-  } catch (error) {
+  } catch {
     return null;
   }
 }
@@ -147,16 +195,20 @@ function buildAdminSnapshot() {
     generatedAt: new Date().toISOString(),
     counts: {
       sessions: db.sessions.length,
+      users: (db.users || []).length,
+      families: (db.families || []).length,
       pets: db.pets.length,
       members: db.members.length,
       records: db.records.length
     },
     auth: db.auth,
     sessions: db.sessions,
+    users: db.users || [],
+    families: db.families || [],
     pets: db.pets,
     members: db.members,
     records: db.records,
-    reminderSettings: db.reminderSettings
+    familyReminderSettings: db.familyReminderSettings || []
   };
 }
 
@@ -168,6 +220,10 @@ function createSession(token, userId, identityHint, now = new Date()) {
     createdAt: now.toISOString(),
     expiresAt: new Date(now.getTime() + SESSION_TTL_MS).toISOString()
   };
+}
+
+function createInviteCode() {
+  return `CAT-${randomUUID().replace(/-/g, "").slice(0, 8).toUpperCase()}`;
 }
 
 function shouldUseRealWechatLogin() {
@@ -234,12 +290,39 @@ function getBearerToken(req) {
   return matched ? matched[1].trim() : "";
 }
 
-function buildAuthState(db, token) {
+function buildAuthStateFromUser(db, user, token) {
   const session = Array.isArray(db.sessions) ? db.sessions.find((item) => item.token === token) : undefined;
+  if (!user) {
+    return {
+      ...EMPTY_AUTH_STATE,
+      sessionToken: token || undefined,
+      sessionExpiresAt: session?.expiresAt
+    };
+  }
   return {
-    ...db.auth,
+    isLoggedIn: true,
+    currentPetId: user.currentPetId || "",
+    hasCompletedOnboarding: Boolean(user.hasCompletedOnboarding),
+    user: {
+      id: user.id,
+      nickname: user.nickname,
+      avatarText: user.avatarText
+    },
     sessionToken: token || undefined,
     sessionExpiresAt: session?.expiresAt
+  };
+}
+
+function syncLegacyAuthState(draft, user, isLoggedIn) {
+  draft.auth = {
+    isLoggedIn: Boolean(isLoggedIn && user),
+    currentPetId: user?.currentPetId || "",
+    hasCompletedOnboarding: Boolean(user?.hasCompletedOnboarding),
+    user: {
+      id: user?.id || "",
+      nickname: user?.nickname || "",
+      avatarText: user?.avatarText || ""
+    }
   };
 }
 
@@ -261,16 +344,21 @@ function requireAuth(req, res) {
   const expiresAtMs = new Date(session.expiresAt || "").getTime();
   if (!Number.isNaN(expiresAtMs) && expiresAtMs <= Date.now()) {
     updateDb((draft) => {
-      draft.auth.isLoggedIn = false;
-      draft.auth.hasCompletedOnboarding = false;
       draft.sessions = Array.isArray(draft.sessions) ? draft.sessions.filter((item) => item.token !== token) : [];
+      syncLegacyAuthState(draft, undefined, false);
       return draft;
     });
     sendError(res, 401, "登录已过期");
     return null;
   }
 
-  return { db, token, session };
+  const user = getUserById(db, session.userId);
+  if (!user) {
+    sendError(res, 401, "账号不存在");
+    return null;
+  }
+
+  return { db, token, session, user };
 }
 
 async function handleRequest(req, res) {
@@ -323,6 +411,8 @@ async function handleRequest(req, res) {
       ok: true,
       counts: {
         sessions: db.sessions.length,
+        users: (db.users || []).length,
+        families: (db.families || []).length,
         pets: db.pets.length,
         members: db.members.length,
         records: db.records.length
@@ -341,14 +431,13 @@ async function handleRequest(req, res) {
   if (pathname === "/api/auth/state" && req.method === "GET") {
     const token = getBearerToken(req);
     if (!token) {
-      const db = readDb();
-      sendJson(res, 200, { ...db.auth, isLoggedIn: false, sessionToken: undefined });
+      sendJson(res, 200, { ...EMPTY_AUTH_STATE, sessionToken: undefined });
       return;
     }
 
     const authResult = requireAuth(req, res);
     if (!authResult) return;
-    sendJson(res, 200, buildAuthState(authResult.db, authResult.token));
+    sendJson(res, 200, buildAuthStateFromUser(authResult.db, authResult.user, authResult.token));
     return;
   }
 
@@ -361,37 +450,80 @@ async function handleRequest(req, res) {
         sendError(res, 400, "缺少微信登录 code");
         return;
       }
-      const session = await fetchWechatSession(String(body.code));
-      identityHint = session.openid;
+      const sessionInfo = await fetchWechatSession(String(body.code));
+      identityHint = sessionInfo.openid;
     }
 
     const token = `sess_${randomUUID()}`;
+    const today = new Date().toISOString().slice(0, 10);
+
     const db = updateDb((draft) => {
-      draft.auth.isLoggedIn = true;
-      draft.auth.user.nickname = draft.auth.user.nickname || "微信用户";
-      draft.auth.user.avatarText = draft.auth.user.avatarText || "微";
+      draft.users = Array.isArray(draft.users) ? draft.users : [];
+      draft.families = Array.isArray(draft.families) ? draft.families : [];
+      draft.members = Array.isArray(draft.members) ? draft.members : [];
       draft.sessions = Array.isArray(draft.sessions) ? draft.sessions : [];
+      draft.familyReminderSettings = Array.isArray(draft.familyReminderSettings) ? draft.familyReminderSettings : [];
+
+      let user = draft.users.find((item) => item.identityHint === identityHint);
+      if (!user) {
+        const familyId = `family_${randomUUID().slice(0, 8)}`;
+        const userId = `user_${randomUUID().slice(0, 8)}`;
+        const inviteCode = createInviteCode();
+        user = {
+          id: userId,
+          identityHint,
+          nickname: "微信用户",
+          avatarText: "微",
+          familyId,
+          currentPetId: "",
+          hasCompletedOnboarding: false
+        };
+        draft.families.push({
+          id: familyId,
+          name: "我的猫咪家庭",
+          inviteCode,
+          createdAt: today
+        });
+        draft.users.push(user);
+        draft.members.push({
+          id: `member_${randomUUID().slice(0, 8)}`,
+          userId,
+          familyId,
+          displayName: user.nickname,
+          role: "owner",
+          joinedAt: today
+        });
+        draft.familyReminderSettings.push({
+          familyId,
+          vaccineEnabled: true,
+          dewormEnabled: true,
+          leadDays: 3
+        });
+      }
+
       draft.sessions = draft.sessions
-        .filter((item) => item.userId !== draft.auth.user.id)
-        .concat([createSession(token, draft.auth.user.id, identityHint)]);
+        .filter((item) => item.userId !== user.id)
+        .concat([createSession(token, user.id, identityHint)]);
+      syncLegacyAuthState(draft, user, true);
       return draft;
     });
-    sendJson(res, 200, buildAuthState(db, token));
+
+    const user = getUserByIdentityHint(db, identityHint);
+    sendJson(res, 200, buildAuthStateFromUser(db, user, token));
     return;
   }
 
   if (pathname === "/api/auth/logout" && req.method === "POST") {
     const authResult = requireAuth(req, res);
     if (!authResult) return;
-    const db = updateDb((draft) => {
-      draft.auth.isLoggedIn = false;
-      draft.auth.hasCompletedOnboarding = false;
+    updateDb((draft) => {
       draft.sessions = Array.isArray(draft.sessions)
         ? draft.sessions.filter((item) => item.token !== authResult.token)
         : [];
+      syncLegacyAuthState(draft, authResult.user, false);
       return draft;
     });
-    sendJson(res, 200, { ...db.auth, sessionToken: undefined });
+    sendJson(res, 200, { ...EMPTY_AUTH_STATE, sessionToken: undefined });
     return;
   }
 
@@ -399,10 +531,20 @@ async function handleRequest(req, res) {
     const authResult = requireAuth(req, res);
     if (!authResult) return;
     const db = updateDb((draft) => {
-      draft.auth.hasCompletedOnboarding = true;
+      draft.users = draft.users.map((item) =>
+        item.id === authResult.user.id
+          ? {
+              ...item,
+              hasCompletedOnboarding: true
+            }
+          : item
+      );
+      const nextUser = draft.users.find((item) => item.id === authResult.user.id);
+      syncLegacyAuthState(draft, nextUser, true);
       return draft;
     });
-    sendJson(res, 200, buildAuthState(db, authResult.token));
+    const user = getUserById(db, authResult.user.id);
+    sendJson(res, 200, buildAuthStateFromUser(db, user, authResult.token));
     return;
   }
 
@@ -420,42 +562,72 @@ async function handleRequest(req, res) {
               : item
           )
         : [];
-      draft.auth.isLoggedIn = true;
+      syncLegacyAuthState(draft, authResult.user, true);
       return draft;
     });
-    sendJson(res, 200, buildAuthState(db, authResult.token));
+    const user = getUserById(db, authResult.user.id);
+    sendJson(res, 200, buildAuthStateFromUser(db, user, authResult.token));
     return;
   }
 
   if (pathname === "/api/invite/join" && req.method === "POST") {
+    const authResult = requireAuth(req, res);
+    if (!authResult) return;
     const body = await readBody(req);
     if (!body.code) {
       sendError(res, 400, "缺少邀请码");
       return;
     }
-    if (String(body.code).trim().toUpperCase() !== "CAT-2026") {
+
+    const targetCode = String(body.code).trim().toUpperCase();
+    const targetFamily = (authResult.db.families || []).find((item) => item.inviteCode === targetCode);
+    if (!targetFamily) {
       sendError(res, 400, "邀请码无效");
       return;
     }
 
+    if (targetFamily.id === authResult.user.familyId) {
+      sendJson(res, 200, {
+        ok: true,
+        memberId: authResult.user.id,
+        memberCount: getFamilyMembers(authResult.db, targetFamily.id).length
+      });
+      return;
+    }
+
     const db = updateDb((draft) => {
-      const nextIndex = draft.members.length + 1;
-      const member = {
+      draft.users = draft.users.map((item) => {
+        if (item.id !== authResult.user.id) return item;
+        const firstPet = draft.pets.find((pet) => pet.familyId === targetFamily.id);
+        return {
+          ...item,
+          familyId: targetFamily.id,
+          currentPetId: firstPet?.id || "",
+          hasCompletedOnboarding: Boolean(firstPet)
+        };
+      });
+
+      draft.members = draft.members.filter((item) => item.userId !== authResult.user.id);
+      const nextIndex = draft.members.filter((item) => item.familyId === targetFamily.id).length + 1;
+      draft.members.push({
         id: `member_${randomUUID().slice(0, 8)}`,
-        familyId: "family_1",
+        userId: authResult.user.id,
+        familyId: targetFamily.id,
         displayName: String(body.displayName || "").trim() || `家人${nextIndex}`,
         role: "member",
         joinedAt: new Date().toISOString().slice(0, 10)
-      };
-      draft.members.push(member);
+      });
+
+      const nextUser = draft.users.find((item) => item.id === authResult.user.id);
+      syncLegacyAuthState(draft, nextUser, true);
       return draft;
     });
 
-    const member = db.members[db.members.length - 1];
+    const user = getUserById(db, authResult.user.id);
     sendJson(res, 200, {
       ok: true,
-      memberId: member.id,
-      memberCount: db.members.length
+      memberId: user.id,
+      memberCount: getFamilyMembers(db, user.familyId).length
     });
     return;
   }
@@ -464,21 +636,23 @@ async function handleRequest(req, res) {
   if (!authResult) return;
 
   if (pathname === "/api/home" && req.method === "GET") {
-    const currentPet = getCurrentPet(authResult.db);
-    const records = authResult.db.records.filter((item) => item.petId === currentPet.id);
+    const currentPet = getCurrentPetForUser(authResult.db, authResult.user);
+    const currentPetRecords = currentPet
+      ? authResult.db.records.filter((item) => item.petId === currentPet.id)
+      : [];
     sendJson(res, 200, {
       currentPet,
-      reminder: getUpcomingReminder(currentPet, records),
-      latestWeight: getLatestWeight(records),
-      latestRecord: getLatestRecord(records),
-      petCount: authResult.db.pets.length,
-      familyMemberCount: authResult.db.members.length
+      reminder: currentPet ? getUpcomingReminder(currentPet, currentPetRecords) : undefined,
+      latestWeight: getLatestWeight(currentPetRecords),
+      latestRecord: getLatestRecord(currentPetRecords),
+      petCount: getFamilyPets(authResult.db, authResult.user.familyId).length,
+      familyMemberCount: getFamilyMembers(authResult.db, authResult.user.familyId).length
     });
     return;
   }
 
   if (pathname === "/api/pets" && req.method === "GET") {
-    sendJson(res, 200, authResult.db.pets);
+    sendJson(res, 200, getFamilyPets(authResult.db, authResult.user.familyId));
     return;
   }
 
@@ -488,10 +662,22 @@ async function handleRequest(req, res) {
       sendError(res, 400, "缺少 petId");
       return;
     }
+    const targetPet = getFamilyPets(authResult.db, authResult.user.familyId).find((item) => item.id === body.petId);
+    if (!targetPet) {
+      sendError(res, 403, "无权切换该猫咪");
+      return;
+    }
     updateDb((draft) => {
-      if (draft.pets.some((item) => item.id === body.petId)) {
-        draft.auth.currentPetId = body.petId;
-      }
+      draft.users = draft.users.map((item) =>
+        item.id === authResult.user.id
+          ? {
+              ...item,
+              currentPetId: body.petId
+            }
+          : item
+      );
+      const nextUser = draft.users.find((item) => item.id === authResult.user.id);
+      syncLegacyAuthState(draft, nextUser, true);
       return draft;
     });
     sendJson(res, 200, { ok: true });
@@ -502,26 +688,44 @@ async function handleRequest(req, res) {
     const body = await readBody(req);
     const db = updateDb((draft) => {
       if (body.id) {
-        draft.pets = draft.pets.map((item) => (item.id === body.id ? { ...item, ...body } : item));
-        return draft;
+        const existing = draft.pets.find((item) => item.id === body.id && item.familyId === authResult.user.familyId);
+        if (!existing) {
+          throw new Error("猫咪不存在");
+        }
+        draft.pets = draft.pets.map((item) => (item.id === body.id ? { ...item, ...body, familyId: item.familyId } : item));
+      } else {
+        const pet = {
+          id: `pet_${randomUUID().slice(0, 8)}`,
+          familyId: authResult.user.familyId,
+          ...body
+        };
+        draft.pets.unshift(pet);
+        draft.users = draft.users.map((item) =>
+          item.id === authResult.user.id
+            ? {
+                ...item,
+                currentPetId: pet.id
+              }
+            : item
+        );
       }
-      const pet = {
-        id: `pet_${randomUUID().slice(0, 8)}`,
-        familyId: "family_1",
-        ...body
-      };
-      draft.pets.unshift(pet);
-      draft.auth.currentPetId = pet.id;
+      const nextUser = draft.users.find((item) => item.id === authResult.user.id);
+      syncLegacyAuthState(draft, nextUser, true);
       return draft;
     });
-    const pet = body.id ? db.pets.find((item) => item.id === body.id) : db.pets[0];
+    const pets = getFamilyPets(db, authResult.user.familyId);
+    const pet = body.id ? pets.find((item) => item.id === body.id) : pets.find((item) => item.id === getUserById(db, authResult.user.id)?.currentPetId);
     sendJson(res, 200, pet);
     return;
   }
 
   if (pathname.startsWith("/api/pets/") && req.method === "GET") {
     const petId = pathname.split("/").pop();
-    const pet = authResult.db.pets.find((item) => item.id === petId) || getCurrentPet(authResult.db);
+    const pet = getFamilyPets(authResult.db, authResult.user.familyId).find((item) => item.id === petId) || getCurrentPetForUser(authResult.db, authResult.user);
+    if (!pet) {
+      sendError(res, 404, "猫咪不存在");
+      return;
+    }
     const petRecords = sortRecords(authResult.db.records.filter((item) => item.petId === pet.id));
     sendJson(res, 200, {
       pet,
@@ -536,11 +740,12 @@ async function handleRequest(req, res) {
   if (pathname === "/api/records" && req.method === "GET") {
     const petId = url.searchParams.get("petId");
     const type = url.searchParams.get("type");
+    const familyPetIds = new Set(getFamilyPets(authResult.db, authResult.user.familyId).map((item) => item.id));
     const records = sortRecords(
       authResult.db.records.filter((item) => {
         const petMatch = petId ? item.petId === petId : true;
         const typeMatch = type && type !== "all" ? item.type === type : true;
-        return petMatch && typeMatch;
+        return familyPetIds.has(item.petId) && petMatch && typeMatch;
       })
     );
     sendJson(res, 200, records);
@@ -551,6 +756,11 @@ async function handleRequest(req, res) {
     const body = await readBody(req);
     if (!body.petId || !body.type) {
       sendError(res, 400, "缺少记录必要字段");
+      return;
+    }
+    const pet = getFamilyPets(authResult.db, authResult.user.familyId).find((item) => item.id === body.petId);
+    if (!pet) {
+      sendError(res, 403, "无权为该猫咪记录数据");
       return;
     }
 
@@ -599,7 +809,8 @@ async function handleRequest(req, res) {
 
   if (pathname.startsWith("/api/records/") && req.method === "GET") {
     const recordId = pathname.split("/").pop();
-    const record = authResult.db.records.find((item) => item.id === recordId);
+    const familyPetIds = new Set(getFamilyPets(authResult.db, authResult.user.familyId).map((item) => item.id));
+    const record = authResult.db.records.find((item) => item.id === recordId && familyPetIds.has(item.petId));
     if (!record) {
       sendError(res, 404, "记录不存在");
       return;
@@ -610,6 +821,12 @@ async function handleRequest(req, res) {
 
   if (pathname.startsWith("/api/records/") && pathname.endsWith("/delete") && req.method === "POST") {
     const recordId = pathname.split("/")[3];
+    const familyPetIds = new Set(getFamilyPets(authResult.db, authResult.user.familyId).map((item) => item.id));
+    const exists = authResult.db.records.some((item) => item.id === recordId && familyPetIds.has(item.petId));
+    if (!exists) {
+      sendError(res, 404, "记录不存在");
+      return;
+    }
     updateDb((draft) => {
       draft.records = draft.records.filter((item) => item.id !== recordId);
       return draft;
@@ -621,10 +838,15 @@ async function handleRequest(req, res) {
   if (pathname.startsWith("/api/records/") && req.method === "POST") {
     const recordId = pathname.split("/").pop();
     const body = await readBody(req);
-    let updatedRecord = null;
+    const familyPetIds = new Set(getFamilyPets(authResult.db, authResult.user.familyId).map((item) => item.id));
+    if (!familyPetIds.has(body.petId)) {
+      sendError(res, 403, "无权编辑该记录");
+      return;
+    }
 
+    let updatedRecord = null;
     updateDb((draft) => {
-      const existing = draft.records.find((item) => item.id === recordId);
+      const existing = draft.records.find((item) => item.id === recordId && familyPetIds.has(item.petId));
       if (!existing) {
         throw new Error("记录不存在");
       }
@@ -673,36 +895,43 @@ async function handleRequest(req, res) {
   }
 
   if (pathname === "/api/family-members" && req.method === "GET") {
-    sendJson(res, 200, authResult.db.members);
+    sendJson(res, 200, getFamilyMembers(authResult.db, authResult.user.familyId));
     return;
   }
 
   if (pathname === "/api/reminder-settings" && req.method === "GET") {
-    sendJson(res, 200, authResult.db.reminderSettings);
+    sendJson(res, 200, getReminderSettingsForFamily(authResult.db, authResult.user.familyId));
     return;
   }
 
   if (pathname === "/api/reminder-settings" && req.method === "POST") {
     const body = await readBody(req);
     const db = updateDb((draft) => {
-      draft.reminderSettings = {
+      draft.familyReminderSettings = Array.isArray(draft.familyReminderSettings) ? draft.familyReminderSettings : [];
+      const existing = draft.familyReminderSettings.find((item) => item.familyId === authResult.user.familyId);
+      const nextValue = {
+        familyId: authResult.user.familyId,
         vaccineEnabled: Boolean(body.vaccineEnabled),
         dewormEnabled: Boolean(body.dewormEnabled),
         leadDays: Number(body.leadDays || 0)
       };
+      draft.familyReminderSettings = existing
+        ? draft.familyReminderSettings.map((item) => (item.familyId === authResult.user.familyId ? nextValue : item))
+        : draft.familyReminderSettings.concat(nextValue);
       return draft;
     });
-    sendJson(res, 200, db.reminderSettings);
+    sendJson(res, 200, getReminderSettingsForFamily(db, authResult.user.familyId));
     return;
   }
 
   if (pathname === "/api/invite" && req.method === "GET") {
-    const pet = getCurrentPet(authResult.db);
+    const family = getFamilyById(authResult.db, authResult.user.familyId);
+    const currentPet = getCurrentPetForUser(authResult.db, authResult.user);
     sendJson(res, 200, {
-      familyName: `${pet.name} 的家庭`,
-      inviteCode: "CAT-2026",
-      expiresHint: "24 小时内有效",
-      memberCount: authResult.db.members.length
+      familyName: family?.name || (currentPet ? `${currentPet.name} 的家庭` : "我的猫咪家庭"),
+      inviteCode: family?.inviteCode || "",
+      expiresHint: "长期有效",
+      memberCount: getFamilyMembers(authResult.db, authResult.user.familyId).length
     });
     return;
   }
@@ -714,7 +943,7 @@ const server = http.createServer((req, res) => {
   handleRequest(req, res).catch((error) => {
     console.error(error);
     if (!res.headersSent) {
-      const statusCode = error.message === "记录不存在" ? 404 : 500;
+      const statusCode = error.message === "记录不存在" || error.message === "猫咪不存在" ? 404 : 500;
       sendError(res, statusCode, error.message || "服务器异常");
     }
   });

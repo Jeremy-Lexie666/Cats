@@ -104,6 +104,25 @@ Page({
   },
   async refresh() {
     const home = await api.getHomeData();
+    if (!home.currentPet) {
+      this.setData({
+        currentPetId: "",
+        petName: "还没有小猫",
+        petAge: "先完成建档",
+        petNote: "先添加第一只小猫",
+        reminderItems: [
+          { id: "placeholder_vaccine", label: "疫苗接种", dueText: "待补充" },
+          { id: "placeholder_deworm", label: "体内驱虫", dueText: "待补充" }
+        ],
+        reminderCountText: "0条",
+        latestWeightValue: "--",
+        weightTrendText: "稳定",
+        weightTrendClass: "",
+        loading: false
+      });
+      return;
+    }
+
     const currentPetId = home.currentPet.id;
     const currentPetRecords = await api.listRecords({ petId: currentPetId });
     const reminderItems = buildReminderRows(currentPetRecords);
@@ -123,15 +142,18 @@ Page({
     });
   },
   openRecords() {
+    if (!this.data.currentPetId) return;
     wx.navigateTo({ url: `/pages/records/index?petId=${this.data.currentPetId}` });
   },
   openPets() {
     wx.switchTab({ url: "/pages/pets/index" });
   },
   openWeight() {
+    if (!this.data.currentPetId) return;
     wx.navigateTo({ url: `/pages/weights/index?petId=${this.data.currentPetId}` });
   },
   addRecord() {
+    if (!this.data.currentPetId) return;
     wx.navigateTo({ url: `/pages/records/edit/index?petId=${this.data.currentPetId}&mode=healthOnly&type=vaccine` });
   }
 });

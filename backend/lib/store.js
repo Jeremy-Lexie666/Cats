@@ -19,6 +19,17 @@ function ensureRuntimeDir() {
   }
 }
 
+function hasColumn(database, tableName, columnName) {
+  const rows = database.prepare(`PRAGMA table_info(${tableName})`).all();
+  return rows.some((row) => row.name === columnName);
+}
+
+function ensureLegacyCompatibility(database) {
+  if (!hasColumn(database, "members", "user_id")) {
+    database.exec("ALTER TABLE members ADD COLUMN user_id TEXT");
+  }
+}
+
 function getDb() {
   if (db) {
     return db;
@@ -29,10 +40,13 @@ function getDb() {
   db.exec("PRAGMA journal_mode = WAL;");
   db.exec("PRAGMA foreign_keys = OFF;");
   initializeSchema(db);
+  ensureLegacyCompatibility(db);
 
   const hasSeed = db.prepare("SELECT COUNT(1) AS count FROM auth_state").get().count > 0;
   if (!hasSeed) {
     seedDatabase(db);
+  } else {
+    migrateLegacySnapshotIfNeeded(db);
   }
 
   return db;
@@ -58,6 +72,23 @@ function initializeSchema(database) {
       expires_at TEXT NOT NULL
     );
 
+    CREATE TABLE IF NOT EXISTS users (
+      id TEXT PRIMARY KEY,
+      identity_hint TEXT NOT NULL UNIQUE,
+      nickname TEXT NOT NULL,
+      avatar_text TEXT NOT NULL,
+      family_id TEXT NOT NULL,
+      current_pet_id TEXT NOT NULL,
+      has_completed_onboarding INTEGER NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS families (
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL,
+      invite_code TEXT NOT NULL UNIQUE,
+      created_at TEXT NOT NULL
+    );
+
     CREATE TABLE IF NOT EXISTS pets (
       id TEXT PRIMARY KEY,
       family_id TEXT NOT NULL,
@@ -73,6 +104,7 @@ function initializeSchema(database) {
 
     CREATE TABLE IF NOT EXISTS members (
       id TEXT PRIMARY KEY,
+      user_id TEXT,
       family_id TEXT NOT NULL,
       display_name TEXT NOT NULL,
       role TEXT NOT NULL,
@@ -94,8 +126,8 @@ function initializeSchema(database) {
       note TEXT
     );
 
-    CREATE TABLE IF NOT EXISTS reminder_settings (
-      id INTEGER PRIMARY KEY CHECK (id = 1),
+    CREATE TABLE IF NOT EXISTS family_reminder_settings (
+      family_id TEXT PRIMARY KEY,
       vaccine_enabled INTEGER NOT NULL,
       deworm_enabled INTEGER NOT NULL,
       lead_days INTEGER NOT NULL
@@ -103,12 +135,83 @@ function initializeSchema(database) {
   `);
 }
 
-function seedDatabase(database) {
-  const seed = JSON.parse(fs.readFileSync(SEED_FILE, "utf8"));
-  writeSnapshot(database, seed);
+function buildLegacyFamilyName(pets, fallbackName = "我的猫咪家庭") {
+  const firstPet = pets[0];
+  return firstPet ? `${firstPet.name} 的家庭` : fallbackName;
 }
 
-function readSnapshot(database) {
+function normalizeSnapshot(rawSnapshot, options = {}) {
+  const today = new Date().toISOString().slice(0, 10);
+  const auth = rawSnapshot.auth || {
+    isLoggedIn: false,
+    currentPetId: "",
+    hasCompletedOnboarding: false,
+    user: { id: "", nickname: "", avatarText: "" }
+  };
+  const pets = Array.isArray(rawSnapshot.pets) ? rawSnapshot.pets : [];
+  const legacyFamilyId = pets[0]?.familyId || "family_1";
+  const legacyInviteCode = "CAT-2026";
+  const families =
+    Array.isArray(rawSnapshot.families) && rawSnapshot.families.length
+      ? rawSnapshot.families
+      : [
+          {
+            id: legacyFamilyId,
+            name: buildLegacyFamilyName(pets),
+            inviteCode: legacyInviteCode,
+            createdAt: rawSnapshot.members?.[0]?.joinedAt || today
+          }
+        ];
+
+  const users =
+    Array.isArray(rawSnapshot.users) && rawSnapshot.users.length
+      ? rawSnapshot.users
+      : [
+          {
+            id: auth.user.id || "user_1",
+            identityHint: `legacy-${auth.user.id || "user_1"}`,
+            nickname: auth.user.nickname || "Jeremy",
+            avatarText: auth.user.avatarText || "J",
+            familyId: legacyFamilyId,
+            currentPetId: auth.currentPetId || pets[0]?.id || "",
+            hasCompletedOnboarding: Boolean(auth.hasCompletedOnboarding)
+          }
+        ];
+
+  const ownerUserId = users[0]?.id || "";
+  const members = (Array.isArray(rawSnapshot.members) ? rawSnapshot.members : []).map((item, index) => ({
+    ...item,
+    userId: item.userId || (index === 0 && item.role === "owner" ? ownerUserId : "")
+  }));
+
+  const familyReminderSettings =
+    Array.isArray(rawSnapshot.familyReminderSettings) && rawSnapshot.familyReminderSettings.length
+      ? rawSnapshot.familyReminderSettings
+      : families.map((family) => ({
+          familyId: family.id,
+          vaccineEnabled: rawSnapshot.reminderSettings?.vaccineEnabled ?? true,
+          dewormEnabled: rawSnapshot.reminderSettings?.dewormEnabled ?? true,
+          leadDays: rawSnapshot.reminderSettings?.leadDays ?? 3
+        }));
+
+  return {
+    auth,
+    sessions: options.clearSessions ? [] : Array.isArray(rawSnapshot.sessions) ? rawSnapshot.sessions : [],
+    users,
+    families,
+    pets,
+    members,
+    records: Array.isArray(rawSnapshot.records) ? rawSnapshot.records : [],
+    familyReminderSettings
+  };
+}
+
+function seedDatabase(database) {
+  const seed = JSON.parse(fs.readFileSync(SEED_FILE, "utf8"));
+  writeSnapshot(database, normalizeSnapshot(seed));
+}
+
+function readLegacySnapshot(database) {
   const authRow = database.prepare("SELECT * FROM auth_state WHERE id = 1").get();
   const sessions = database
     .prepare("SELECT token, user_id AS userId, identity_hint AS identityHint, created_at AS createdAt, expires_at AS expiresAt FROM sessions")
@@ -176,7 +279,20 @@ function readSnapshot(database) {
         note: item.note || undefined
       };
     });
-  const reminderRow = database.prepare("SELECT * FROM reminder_settings WHERE id = 1").get();
+
+  let reminderSettings = { vaccineEnabled: true, dewormEnabled: true, leadDays: 3 };
+  try {
+    const reminderRow = database.prepare("SELECT * FROM reminder_settings WHERE id = 1").get();
+    if (reminderRow) {
+      reminderSettings = {
+        vaccineEnabled: Boolean(reminderRow.vaccine_enabled),
+        dewormEnabled: Boolean(reminderRow.deworm_enabled),
+        leadDays: Number(reminderRow.lead_days || 0)
+      };
+    }
+  } catch {
+    // ignore legacy reminder table absence
+  }
 
   return {
     auth: authRow
@@ -204,17 +320,152 @@ function readSnapshot(database) {
     pets,
     members,
     records,
-    reminderSettings: reminderRow
+    reminderSettings
+  };
+}
+
+function migrateLegacySnapshotIfNeeded(database) {
+  const hasUsers = database.prepare("SELECT COUNT(1) AS count FROM users").get().count > 0;
+  if (hasUsers) {
+    return;
+  }
+
+  const legacy = readLegacySnapshot(database);
+  const normalized = normalizeSnapshot(legacy, { clearSessions: true });
+  writeSnapshot(database, normalized);
+}
+
+function readSnapshot(database) {
+  const authRow = database.prepare("SELECT * FROM auth_state WHERE id = 1").get();
+  const sessions = database
+    .prepare("SELECT token, user_id AS userId, identity_hint AS identityHint, created_at AS createdAt, expires_at AS expiresAt FROM sessions")
+    .all();
+  const users = database
+    .prepare(
+      `SELECT
+        id,
+        identity_hint AS identityHint,
+        nickname,
+        avatar_text AS avatarText,
+        family_id AS familyId,
+        current_pet_id AS currentPetId,
+        has_completed_onboarding AS hasCompletedOnboarding
+      FROM users`
+    )
+    .all()
+    .map((item) => ({
+      ...item,
+      hasCompletedOnboarding: Boolean(item.hasCompletedOnboarding)
+    }));
+  const families = database
+    .prepare("SELECT id, name, invite_code AS inviteCode, created_at AS createdAt FROM families")
+    .all();
+  const pets = database
+    .prepare(
+      "SELECT id, family_id AS familyId, name, birthday, breed, gender, is_neutered AS isNeutered, avatar_text AS avatarText, photo_url AS photoUrl, note FROM pets"
+    )
+    .all()
+    .map((item) => ({
+      ...item,
+      isNeutered: Boolean(item.isNeutered)
+    }));
+  const members = database
+    .prepare(
+      "SELECT id, user_id AS userId, family_id AS familyId, display_name AS displayName, role, joined_at AS joinedAt FROM members"
+    )
+    .all();
+  const records = database
+    .prepare(
+      `SELECT
+        id,
+        pet_id AS petId,
+        type,
+        vaccine_name AS vaccineName,
+        vaccinated_at AS vaccinatedAt,
+        next_due_at AS nextDueAt,
+        mode,
+        brand,
+        executed_at AS executedAt,
+        weight_kg AS weightKg,
+        recorded_at AS recordedAt,
+        note
+      FROM records`
+    )
+    .all()
+    .map((item) => {
+      if (item.type === "vaccine") {
+        return {
+          id: item.id,
+          petId: item.petId,
+          type: item.type,
+          vaccineName: item.vaccineName,
+          vaccinatedAt: item.vaccinatedAt,
+          nextDueAt: item.nextDueAt || undefined,
+          note: item.note || undefined
+        };
+      }
+      if (item.type === "deworm") {
+        return {
+          id: item.id,
+          petId: item.petId,
+          type: item.type,
+          mode: item.mode,
+          brand: item.brand,
+          executedAt: item.executedAt,
+          nextDueAt: item.nextDueAt || undefined,
+          note: item.note || undefined
+        };
+      }
+      return {
+        id: item.id,
+        petId: item.petId,
+        type: item.type,
+        weightKg: Number(item.weightKg || 0),
+        recordedAt: item.recordedAt,
+        note: item.note || undefined
+      };
+    });
+  const familyReminderSettings = database
+    .prepare(
+      "SELECT family_id AS familyId, vaccine_enabled AS vaccineEnabled, deworm_enabled AS dewormEnabled, lead_days AS leadDays FROM family_reminder_settings"
+    )
+    .all()
+    .map((item) => ({
+      ...item,
+      vaccineEnabled: Boolean(item.vaccineEnabled),
+      dewormEnabled: Boolean(item.dewormEnabled),
+      leadDays: Number(item.leadDays || 0)
+    }));
+
+  return {
+    auth: authRow
       ? {
-          vaccineEnabled: Boolean(reminderRow.vaccine_enabled),
-          dewormEnabled: Boolean(reminderRow.deworm_enabled),
-          leadDays: Number(reminderRow.lead_days || 0)
+          isLoggedIn: Boolean(authRow.is_logged_in),
+          currentPetId: authRow.current_pet_id,
+          hasCompletedOnboarding: Boolean(authRow.has_completed_onboarding),
+          user: {
+            id: authRow.user_id,
+            nickname: authRow.user_nickname,
+            avatarText: authRow.user_avatar_text
+          }
         }
       : {
-          vaccineEnabled: true,
-          dewormEnabled: true,
-          leadDays: 3
-        }
+          isLoggedIn: false,
+          currentPetId: "",
+          hasCompletedOnboarding: false,
+          user: {
+            id: "",
+            nickname: "",
+            avatarText: ""
+          }
+        },
+    sessions,
+    users,
+    families,
+    pets,
+    members,
+    records,
+    familyReminderSettings
   };
 }
 
@@ -222,14 +473,17 @@ function clearTables(database) {
   database.exec(`
     DELETE FROM auth_state;
     DELETE FROM sessions;
+    DELETE FROM users;
+    DELETE FROM families;
     DELETE FROM pets;
     DELETE FROM members;
     DELETE FROM records;
-    DELETE FROM reminder_settings;
+    DELETE FROM family_reminder_settings;
   `);
 }
 
-function writeSnapshot(database, snapshot) {
+function writeSnapshot(database, rawSnapshot) {
+  const snapshot = normalizeSnapshot(rawSnapshot);
   database.exec("BEGIN");
   try {
     clearTables(database);
@@ -242,11 +496,11 @@ function writeSnapshot(database, snapshot) {
       )
       .run(
         snapshot.auth.isLoggedIn ? 1 : 0,
-        snapshot.auth.currentPetId,
+        snapshot.auth.currentPetId || "",
         snapshot.auth.hasCompletedOnboarding ? 1 : 0,
-        snapshot.auth.user.id,
-        snapshot.auth.user.nickname,
-        snapshot.auth.user.avatarText
+        snapshot.auth.user.id || "",
+        snapshot.auth.user.nickname || "",
+        snapshot.auth.user.avatarText || ""
       );
 
     const insertSession = database.prepare(
@@ -255,6 +509,31 @@ function writeSnapshot(database, snapshot) {
     );
     for (const item of snapshot.sessions || []) {
       insertSession.run(item.token, item.userId, item.identityHint || "", item.createdAt, item.expiresAt);
+    }
+
+    const insertUser = database.prepare(
+      `INSERT INTO users
+      (id, identity_hint, nickname, avatar_text, family_id, current_pet_id, has_completed_onboarding)
+      VALUES (?, ?, ?, ?, ?, ?, ?)`
+    );
+    for (const item of snapshot.users || []) {
+      insertUser.run(
+        item.id,
+        item.identityHint,
+        item.nickname,
+        item.avatarText,
+        item.familyId,
+        item.currentPetId || "",
+        item.hasCompletedOnboarding ? 1 : 0
+      );
+    }
+
+    const insertFamily = database.prepare(
+      `INSERT INTO families (id, name, invite_code, created_at)
+       VALUES (?, ?, ?, ?)`
+    );
+    for (const item of snapshot.families || []) {
+      insertFamily.run(item.id, item.name, item.inviteCode, item.createdAt);
     }
 
     const insertPet = database.prepare(
@@ -278,11 +557,11 @@ function writeSnapshot(database, snapshot) {
     }
 
     const insertMember = database.prepare(
-      `INSERT INTO members (id, family_id, display_name, role, joined_at)
-       VALUES (?, ?, ?, ?, ?)`
+      `INSERT INTO members (id, user_id, family_id, display_name, role, joined_at)
+       VALUES (?, ?, ?, ?, ?, ?)`
     );
     for (const item of snapshot.members || []) {
-      insertMember.run(item.id, item.familyId, item.displayName, item.role, item.joinedAt);
+      insertMember.run(item.id, item.userId || null, item.familyId, item.displayName, item.role, item.joinedAt);
     }
 
     const insertRecord = database.prepare(
@@ -307,17 +586,19 @@ function writeSnapshot(database, snapshot) {
       );
     }
 
-    database
-      .prepare(
-        `INSERT INTO reminder_settings
-        (id, vaccine_enabled, deworm_enabled, lead_days)
-        VALUES (1, ?, ?, ?)`
-      )
-      .run(
-        snapshot.reminderSettings.vaccineEnabled ? 1 : 0,
-        snapshot.reminderSettings.dewormEnabled ? 1 : 0,
-        snapshot.reminderSettings.leadDays
+    const insertFamilyReminderSetting = database.prepare(
+      `INSERT INTO family_reminder_settings
+      (family_id, vaccine_enabled, deworm_enabled, lead_days)
+      VALUES (?, ?, ?, ?)`
+    );
+    for (const item of snapshot.familyReminderSettings || []) {
+      insertFamilyReminderSetting.run(
+        item.familyId,
+        item.vaccineEnabled ? 1 : 0,
+        item.dewormEnabled ? 1 : 0,
+        item.leadDays
       );
+    }
 
     database.exec("COMMIT");
   } catch (error) {
@@ -346,7 +627,7 @@ function updateDb(mutator) {
 function resetDb() {
   const database = getDb();
   const seed = JSON.parse(fs.readFileSync(SEED_FILE, "utf8"));
-  writeSnapshot(database, seed);
+  writeSnapshot(database, normalizeSnapshot(seed));
   return readDb();
 }
 

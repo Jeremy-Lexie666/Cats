@@ -25,10 +25,8 @@ Page({
       wx.redirectTo({ url: "/pages/splash/index" });
       return;
     }
-
-    const detail = await api.getPetDetail(auth.currentPetId);
     this.setData({
-      petId: detail.pet.id,
+      petId: auth.currentPetId || "",
       name: "",
       birthday: "",
       breed: "",
