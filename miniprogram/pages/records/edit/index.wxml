@@ -18,13 +18,9 @@
       <view class="form-label">疫苗名称</view>
       <input class="input" value="{{vaccineName}}" data-field="vaccineName" bindinput="handleInput" placeholder="例如猫三联" />
       <view class="form-label">接种日期</view>
-      <picker mode="date" value="{{vaccinatedAt}}" data-field="vaccinatedAt" bindchange="handleDateChange">
-        <view class="input picker-input">{{vaccinatedAt || '请选择日期'}}</view>
-      </picker>
+      <view class="input picker-input" data-field="vaccinatedAt" data-title="选择接种日期" bindtap="openDatePicker">{{vaccinatedAt || '请选择日期'}}</view>
       <view class="form-label">下次提醒日期</view>
-      <picker mode="date" value="{{nextDueAt}}" data-field="nextDueAt" bindchange="handleDateChange">
-        <view class="input picker-input">{{nextDueAt || '请选择日期'}}</view>
-      </picker>
+      <view class="input picker-input" data-field="nextDueAt" data-title="选择下次提醒日期" bindtap="openDatePicker">{{nextDueAt || '请选择日期'}}</view>
     </block>
 
     <block wx:if="{{selectedType === 'deworm'}}">
@@ -35,26 +31,27 @@
       <view class="form-label">品牌</view>
       <input class="input" value="{{brand}}" data-field="brand" bindinput="handleInput" placeholder="例如大宠爱" />
       <view class="form-label">执行日期</view>
-      <picker mode="date" value="{{executedAt}}" data-field="executedAt" bindchange="handleDateChange">
-        <view class="input picker-input">{{executedAt || '请选择日期'}}</view>
-      </picker>
+      <view class="input picker-input" data-field="executedAt" data-title="选择执行日期" bindtap="openDatePicker">{{executedAt || '请选择日期'}}</view>
       <view class="form-label">下次提醒日期</view>
-      <picker mode="date" value="{{nextDueAt}}" data-field="nextDueAt" bindchange="handleDateChange">
-        <view class="input picker-input">{{nextDueAt || '请选择日期'}}</view>
-      </picker>
+      <view class="input picker-input" data-field="nextDueAt" data-title="选择下次提醒日期" bindtap="openDatePicker">{{nextDueAt || '请选择日期'}}</view>
     </block>
 
     <block wx:if="{{selectedType === 'weight'}}">
       <view class="form-label">体重</view>
       <input class="input" type="digit" value="{{weightKg}}" data-field="weightKg" bindinput="handleInput" placeholder="请输入体重（kg）" />
       <view class="form-label">记录日期</view>
-      <picker mode="date" value="{{recordedAt}}" data-field="recordedAt" bindchange="handleDateChange">
-        <view class="input picker-input">{{recordedAt || '请选择日期'}}</view>
-      </picker>
+      <view class="input picker-input" data-field="recordedAt" data-title="选择记录日期" bindtap="openDatePicker">{{recordedAt || '请选择日期'}}</view>
     </block>
   </view>
 
   <button class="primary-button sticky-button" bindtap="saveRecord">保存记录</button>
+  <date-sheet-picker
+    visible="{{datePickerVisible}}"
+    title="{{datePickerTitle}}"
+    value="{{datePickerCurrentValue}}"
+    bind:close="closeDatePicker"
+    bind:confirm="handleDateChange"
+  />
 </view>
 
 <view wx:else class="page-shell"></view>

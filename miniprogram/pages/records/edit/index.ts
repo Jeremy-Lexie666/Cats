@@ -27,7 +27,11 @@ Page({
     executedAt: getToday(),
     weightKg: "",
     recordedAt: getToday(),
-    note: ""
+    note: "",
+    datePickerVisible: false,
+    datePickerField: "",
+    datePickerTitle: "选择日期",
+    datePickerCurrentValue: ""
   },
   async onLoad(options: Record<string, string>) {
     const pageMode = options.mode || "all";
@@ -108,9 +112,28 @@ Page({
     const field = event.currentTarget.dataset.field as string;
     this.setData({ [field]: event.detail.value });
   },
-  handleDateChange(event: WechatMiniprogram.PickerChange) {
-    const field = event.currentTarget.dataset.field as string;
-    this.setData({ [field]: String(event.detail.value || "") });
+  openDatePicker(event: WechatMiniprogram.TouchEvent) {
+    const field = String(event.currentTarget.dataset.field || "");
+    const title = String(event.currentTarget.dataset.title || "选择日期");
+    this.setData({
+      datePickerVisible: true,
+      datePickerField: field,
+      datePickerTitle: title,
+      datePickerCurrentValue: String(this.data[field as keyof typeof this.data] || "")
+    });
+  },
+  closeDatePicker() {
+    this.setData({ datePickerVisible: false, datePickerField: "", datePickerCurrentValue: "" });
+  },
+  handleDateChange(event: WechatMiniprogram.CustomEvent) {
+    const field = this.data.datePickerField;
+    if (!field) return;
+    this.setData({
+      [field]: String(event.detail.value || ""),
+      datePickerVisible: false,
+      datePickerField: "",
+      datePickerCurrentValue: ""
+    });
   },
   handleModeChange(event: WechatMiniprogram.PickerChange) {
     this.setData({ modeIndex: Number(event.detail.value) });

@@ -49,18 +49,16 @@
 
     <view class="form-block">
       <view class="field-label">生日</view>
-      <picker mode="date" value="{{birthday}}" bindchange="handleBirthdayChange">
-        <view class="step-input picker-input">
-          <view class="picker-date-display {{birthday ? 'picker-value' : 'picker-placeholder'}}">
-            <view class="picker-date-part">{{birthdayYear}}</view>
-            <text class="picker-divider">/</text>
-            <view class="picker-date-part">{{birthdayMonth}}</view>
-            <text class="picker-divider">/</text>
-            <view class="picker-date-part">{{birthdayDay}}</view>
-          </view>
-          <view class="picker-icon">◫</view>
+      <view class="step-input picker-input" bindtap="openBirthdayPicker">
+        <view class="picker-date-display {{birthday ? 'picker-value' : 'picker-placeholder'}}">
+          <view class="picker-date-part">{{birthdayYear}}</view>
+          <text class="picker-divider">/</text>
+          <view class="picker-date-part">{{birthdayMonth}}</view>
+          <text class="picker-divider">/</text>
+          <view class="picker-date-part">{{birthdayDay}}</view>
         </view>
-      </picker>
+        <view class="picker-icon">◫</view>
+      </view>
 
       <view class="field-label field-label-spaced">性别</view>
       <view class="gender-segment">
@@ -71,7 +69,11 @@
           data-gender="{{item.value}}"
           bindtap="handleGenderSelect"
         >
-          <view class="gender-option-icon">{{item.value === 'female' ? '♀' : '♂'}}</view>
+          <image
+            class="gender-option-icon"
+            src="{{item.value === 'female' ? '/assets/icons/gender-female.svg' : '/assets/icons/gender-male.svg'}}"
+            mode="aspectFit"
+          />
           <view class="gender-option-label">{{item.label}}</view>
         </view>
       </view>
@@ -127,4 +129,12 @@
     <button wx:if="{{step < 2}}" class="bottom-primary {{step === 0 ? 'bottom-primary-single' : ''}}" bindtap="nextStep">下一步</button>
     <button wx:if="{{step === 2}}" class="bottom-primary" loading="{{finishLoading}}" bindtap="finishFlow">完成</button>
   </view>
+
+  <date-sheet-picker
+    visible="{{birthdayPickerVisible}}"
+    title="选择生日"
+    value="{{birthday}}"
+    bind:close="closeBirthdayPicker"
+    bind:confirm="confirmBirthdayPicker"
+  />
 </view>

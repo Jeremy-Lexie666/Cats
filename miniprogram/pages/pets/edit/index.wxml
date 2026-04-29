@@ -5,7 +5,7 @@
     <input class="input" value="{{name}}" data-field="name" bindinput="handleInput" placeholder="请输入猫咪名字" />
 
     <view class="form-label">生日</view>
-    <input class="input" value="{{birthday}}" data-field="birthday" bindinput="handleInput" placeholder="YYYY-MM-DD" />
+    <view class="input picker-input" bindtap="openDatePicker">{{birthday || '请选择生日'}}</view>
 
     <view class="form-label">品种</view>
     <input class="input" value="{{breed}}" data-field="breed" bindinput="handleInput" placeholder="例如英短、田园猫" />
@@ -33,4 +33,11 @@
   </view>
 
   <button class="primary-button sticky-button" bindtap="savePet">保存猫咪资料</button>
+  <date-sheet-picker
+    visible="{{datePickerVisible}}"
+    title="选择生日"
+    value="{{datePickerCurrentValue}}"
+    bind:close="closeDatePicker"
+    bind:confirm="handleBirthdayConfirm"
+  />
 </view>

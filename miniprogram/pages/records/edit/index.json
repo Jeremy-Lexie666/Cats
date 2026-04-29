@@ -1,3 +1,6 @@
 {
-  "navigationBarTitleText": "新增记录"
+  "navigationBarTitleText": "新增记录",
+  "usingComponents": {
+    "date-sheet-picker": "/components/date-sheet-picker/index"
+  }
 }

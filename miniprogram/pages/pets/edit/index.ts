@@ -18,6 +18,8 @@ Page({
     avatarText: "",
     genderIndex: 0,
     neuteredIndex: 1,
+    datePickerVisible: false,
+    datePickerCurrentValue: "",
     genderOptions: genderOptions.map((item) => item.label),
     neuteredOptions: ["已绝育", "未绝育"]
   },
@@ -43,6 +45,25 @@ Page({
   handleInput(event: WechatMiniprogram.Input) {
     const field = event.currentTarget.dataset.field as string;
     this.setData({ [field]: event.detail.value });
+  },
+  openDatePicker() {
+    this.setData({
+      datePickerVisible: true,
+      datePickerCurrentValue: this.data.birthday
+    });
+  },
+  closeDatePicker() {
+    this.setData({
+      datePickerVisible: false,
+      datePickerCurrentValue: ""
+    });
+  },
+  handleBirthdayConfirm(event: WechatMiniprogram.CustomEvent) {
+    this.setData({
+      birthday: String(event.detail.value || ""),
+      datePickerVisible: false,
+      datePickerCurrentValue: ""
+    });
   },
   handleGenderChange(event: WechatMiniprogram.PickerChange) {
     this.setData({ genderIndex: Number(event.detail.value) });

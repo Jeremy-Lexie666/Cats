@@ -1,4 +1,7 @@
 {
   "navigationStyle": "custom",
-  "disableScroll": false
+  "disableScroll": false,
+  "usingComponents": {
+    "date-sheet-picker": "/components/date-sheet-picker/index"
+  }
 }

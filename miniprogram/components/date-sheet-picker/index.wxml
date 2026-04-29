@@ -1,0 +1,21 @@
+<view wx:if="{{visible}}">
+  <view class="picker-mask" bindtap="handleMaskTap"></view>
+  <view class="birthday-sheet">
+    <view class="birthday-sheet-head">
+      <view class="birthday-sheet-action secondary" bindtap="handleCancel">取消</view>
+      <view class="birthday-sheet-title">{{title}}</view>
+      <view class="birthday-sheet-action primary" bindtap="handleConfirm">确定</view>
+    </view>
+    <picker-view class="birthday-picker-view" indicator-style="height: 88rpx;" value="{{pickerValue}}" bindchange="handlePickerChange">
+      <picker-view-column>
+        <view wx:for="{{years}}" wx:key="*this" class="birthday-picker-item">{{item}} 年</view>
+      </picker-view-column>
+      <picker-view-column>
+        <view wx:for="{{months}}" wx:key="*this" class="birthday-picker-item">{{item}} 月</view>
+      </picker-view-column>
+      <picker-view-column>
+        <view wx:for="{{days}}" wx:key="*this" class="birthday-picker-item">{{item}} 日</view>
+      </picker-view-column>
+    </picker-view>
+  </view>
+</view>

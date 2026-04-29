@@ -1,0 +1,67 @@
+.picker-mask {
+  position: fixed;
+  inset: 0;
+  background: rgba(28, 24, 20, 0.28);
+  z-index: 30;
+}
+
+.birthday-sheet {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 31;
+  border-radius: 32rpx 32rpx 0 0;
+  background: #ffffff;
+  padding: 18rpx 24rpx calc(env(safe-area-inset-bottom) + 22rpx);
+  box-shadow: 0 -16rpx 36rpx rgba(46, 42, 39, 0.08);
+}
+
+.birthday-sheet-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12rpx;
+}
+
+.birthday-sheet-title {
+  font-size: 26rpx;
+  color: #2e2a27;
+  font-weight: 700;
+}
+
+.birthday-sheet-action {
+  min-width: 92rpx;
+  height: 56rpx;
+  border-radius: 16rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24rpx;
+  font-weight: 700;
+}
+
+.birthday-sheet-action.secondary {
+  color: #8d837b;
+  background: #f5f2ef;
+}
+
+.birthday-sheet-action.primary {
+  color: #c48645;
+  background: rgba(212, 165, 116, 0.14);
+}
+
+.birthday-picker-view {
+  width: 100%;
+  height: 360rpx;
+}
+
+.birthday-picker-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 88rpx;
+  font-size: 36rpx;
+  color: #2e2a27;
+  letter-spacing: 1rpx;
+}

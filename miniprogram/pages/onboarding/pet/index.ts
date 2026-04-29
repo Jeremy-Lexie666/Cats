@@ -1,17 +1,12 @@
 import { api } from "../../../services/api";
 import type { PetGender } from "../../../types/domain";
+import { splitDateDisplay } from "../../../utils/date-picker";
 import { formatPetAge } from "../../../utils/pet";
 
 const genderOptions: Array<{ label: string; value: PetGender }> = [
   { label: "小母猫", value: "female" },
   { label: "小公猫", value: "male" }
 ];
-
-function splitBirthdayText(value: string): [string, string, string] {
-  if (!value) return ["年", "月", "日"];
-  const [year = "年", month = "月", day = "日"] = value.split("-");
-  return [year, month, day];
-}
 
 Page({
   data: {
@@ -26,6 +21,7 @@ Page({
     birthdayYear: "年",
     birthdayMonth: "月",
     birthdayDay: "日",
+    birthdayPickerVisible: false,
     genderOptions,
     finishLoading: false,
     statusBarHeight: 28,
@@ -43,7 +39,7 @@ Page({
       wx.redirectTo({ url: "/pages/splash/index" });
       return;
     }
-    const [birthdayYear, birthdayMonth, birthdayDay] = splitBirthdayText("");
+    const [birthdayYear, birthdayMonth, birthdayDay] = splitDateDisplay("");
     this.setData({
       petId: auth.currentPetId || "",
       name: "",
@@ -64,7 +60,7 @@ Page({
   },
   handleBirthdayChange(event: WechatMiniprogram.PickerChange) {
     const birthday = String(event.detail.value || "");
-    const [birthdayYear, birthdayMonth, birthdayDay] = splitBirthdayText(birthday);
+    const [birthdayYear, birthdayMonth, birthdayDay] = splitDateDisplay(birthday);
     this.setData({
       birthday,
       ageText: birthday ? formatPetAge(birthday) : "年龄待补充",
@@ -72,6 +68,19 @@ Page({
       birthdayMonth,
       birthdayDay
     });
+  },
+  openBirthdayPicker() {
+    this.setData({
+      birthdayPickerVisible: true
+    });
+  },
+  closeBirthdayPicker() {
+    this.setData({ birthdayPickerVisible: false });
+  },
+  confirmBirthdayPicker(event: WechatMiniprogram.CustomEvent) {
+    const birthday = String(event.detail.value || "");
+    this.handleBirthdayChange({ detail: { value: birthday } } as WechatMiniprogram.PickerChange);
+    this.closeBirthdayPicker();
   },
   handleGenderSelect(event: WechatMiniprogram.TouchEvent) {
     const gender = event.currentTarget.dataset.gender as PetGender;

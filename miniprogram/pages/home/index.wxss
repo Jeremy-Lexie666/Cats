@@ -64,6 +64,13 @@
   color: #2e2a27;
 }
 
+.hero-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8rpx;
+}
+
 .hero-meta {
   margin-top: 10rpx;
   font-size: 24rpx;
@@ -71,48 +78,31 @@
   color: #80776f;
 }
 
-.hero-meta-row {
-  margin-top: 10rpx;
-  display: flex;
-  align-items: center;
-  gap: 12rpx;
-  flex-wrap: wrap;
-  justify-content: center;
-}
-
-.hero-meta-row .hero-meta {
-  margin-top: 0;
-}
-
-.gender-badge {
-  width: 52rpx;
-  height: 40rpx;
-  padding: 0;
-  border-radius: 999rpx;
+.gender-inline {
+  width: 36rpx;
+  height: 36rpx;
   display: flex;
   align-items: center;
   justify-content: center;
+  flex: none;
 }
 
-.gender-badge-icon {
-  font-size: 24rpx;
-  line-height: 1;
-  font-weight: 700;
-  transform: translateY(-1rpx);
+.gender-inline-icon {
+  display: block;
+  width: 28rpx;
+  height: 28rpx;
+  transform: translateY(1rpx);
 }
 
-.gender-badge.female {
-  background: rgba(232, 149, 180, 0.14);
+.gender-inline.female {
   color: #cf7398;
 }
 
-.gender-badge.male {
-  background: rgba(115, 160, 232, 0.14);
+.gender-inline.male {
   color: #5d8bd0;
 }
 
-.gender-badge.unknown {
-  background: rgba(143, 133, 125, 0.1);
+.gender-inline.unknown {
   color: #8f857d;
 }
 
