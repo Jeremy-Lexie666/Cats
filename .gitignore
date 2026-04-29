@@ -16,3 +16,8 @@ project.private.config.json
 
 # Local backend runtime data
 backend/data/runtime/
+
+# Local env files
+.env
+.env.local
+.env.production

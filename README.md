@@ -8,77 +8,31 @@
 - 疫苗 / 驱虫 / 体重记录
 - 家庭成员共享入口
 
-## 换电脑继续开发
+## 开发环境
 
 ### 1. 准备环境
 
-新电脑需要安装：
+建议安装：
 
-- Node.js 18+
-- npm 9+
+- Node.js 24+
+- npm 10+
 - 微信开发者工具
 
-### 2. 拿到项目代码
+之所以要求 `Node 24+`，是因为后端当前使用了内置 `node:sqlite`。
 
-把整个项目目录带到新电脑，建议放进 Git 仓库后再 clone。
-
-项目根目录就是当前这个目录：
+### 2. 安装依赖
 
 ```bash
-/Users/jeremy/Desktop/Vibe Coding/Codex/小猫来了
+npm install
 ```
 
-### 3. 先做环境自检
+### 3. 环境自检
 
 ```bash
 npm run doctor
 ```
 
-这个命令会检查：
-
-- 关键项目文件是否齐全
-- `node_modules` 是否缺失
-- `node_modules` 是否还是旧机器上的软链接
-- `dist/miniprogram` 是否已经构建
-
-### 4. 重新安装依赖
-
-当前仓库里 `node_modules` 可能是指向别的目录的软链接。换电脑后不要沿用它，直接在项目根目录重新安装：
-
-```bash
-rm -rf node_modules
-npm install
-```
-
-如果你是通过 Git 拉代码，一般本来也不会带上 `node_modules`。
-
-### 5. 构建小程序产物
-
-```bash
-npm run build:miniprogram
-```
-
-这个项目的微信开发者工具入口指向：
-
-```text
-dist/miniprogram
-```
-
-也就是说，先构建，再打开项目会更稳。
-
-### 6. 用微信开发者工具打开
-
-打开项目根目录即可，`project.config.json` 已经配置好了：
-
-- AppID：`wx3d79a9d52f967c06`
-- `miniprogramRoot`：`dist/miniprogram/`
-
-如果你没有这个小程序的开发权限，需要：
-
-- 使用有权限的微信开发者账号登录开发者工具
-- 或者临时替换成自己的测试 AppID
-
-## 常用命令
+### 4. 常用命令
 
 ```bash
 npm run doctor
@@ -87,26 +41,50 @@ npm run build:miniprogram
 npm run backend:start
 ```
 
+## 小程序开发
+
+### 构建产物
+
+```bash
+npm run build:miniprogram
+```
+
+微信开发者工具入口是：
+
+```text
+dist/miniprogram
+```
+
+### 当前小程序配置
+
+关键配置在：
+
+- [miniprogram/app.ts](/Users/jeremy/Desktop/Vibe%20Coding/Codex/小猫来了/miniprogram/app.ts)
+
+默认是：
+
+```ts
+useMock: true
+backendBaseUrl: "http://127.0.0.1:8787/api"
+```
+
+如果你要切本地后端联调，把 `useMock` 改成 `false`。
+
 ## 本地后端
 
-项目现在已经带了一个本地 MVP 后端，位置在：
+后端目录：
 
 ```text
 backend/
 ```
 
-特性：
+当前特性：
 
-- Node 原生 `http` 服务，无额外依赖
-- 本地 JSON 持久化
-- 覆盖当前小程序需要的核心接口：
-  - 登录态
-  - 首页数据
-  - 单猫档案
-  - 疫苗 / 驱虫 / 体重记录
-  - 家庭成员
-  - 提醒设置
-  - 邀请信息
+- Node 原生 `http` 服务
+- SQLite 本地持久化
+- session token 登录态
+- session 自动续期
+- 本地管理后台
 
 ### 启动后端
 
@@ -120,69 +98,36 @@ npm run backend:start
 http://127.0.0.1:8787
 ```
 
-本地管理后台地址：
-
-```text
-http://127.0.0.1:8787/admin
-```
-
 健康检查：
 
 ```text
 GET /health
 ```
 
-### 本地切换到真实后端
+本地管理后台：
 
-当前小程序默认还是 `mock` 模式，配置在：
-
-- [miniprogram/app.ts](/Users/jeremy/Desktop/Vibe%20Coding/Codex/小猫来了/miniprogram/app.ts)
-
-如果你要切到本地后端，把：
-
-```ts
-useMock: true
-```
-
-改成：
-
-```ts
-useMock: false
-```
-
-后端基地址默认就是：
-
-```ts
-backendBaseUrl: "http://127.0.0.1:8787/api"
+```text
+http://127.0.0.1:8787/admin
 ```
 
 ### 微信登录后端说明
 
-当前后端已经支持 `wx.login -> 后端登录接口` 这条链路：
+当前后端支持 `wx.login -> /api/auth/login/wechat`。
 
-- 小程序启动页会先调用 `wx.login`
-- 然后把 `code` 发给：
-
-```text
-POST /api/auth/login/wechat
-```
-
-后端现在有两种模式：
+有两种模式：
 
 1. 开发降级模式
 
-如果没有配置微信密钥，后端会直接把当前用户标记为已登录，方便本地联调。
+未配置微信密钥时，后端会直接生成开发登录态，方便本地联调。
 
 2. 真实微信校验模式
 
-如果你启动后端前配置了下面两个环境变量：
+配置以下环境变量后，后端会调用微信 `jscode2session`：
 
 ```bash
 WECHAT_APPID=你的小程序AppID
 WECHAT_APP_SECRET=你的小程序AppSecret
 ```
-
-后端就会调用微信 `jscode2session` 接口校验 `wx.login` 返回的 `code`。
 
 启动示例：
 
@@ -192,74 +137,163 @@ WECHAT_APPID=xxx WECHAT_APP_SECRET=xxx npm run backend:start
 
 ### 当前登录态机制
 
-现在本地后端已经加了一个轻量 session 机制：
+现在后端使用的是 `session token`，不是 JWT。
 
-- 登录成功后，后端会返回 `sessionToken`
-- 同时会返回 `sessionExpiresAt`
-- 小程序会把 token 存到本地 storage
-- 后续请求会自动通过 `Authorization: Bearer <token>` 带上
-- 当 session 快到期时，小程序会自动调用 `/api/auth/refresh` 续期
-- 登出或接口返回 `401` 时，小程序会自动清掉本地 token
+流程是：
 
-这意味着：
-
-- 现在已经不是单纯依赖内存里的“已登录标记”
-- 后续切数据库、云开发、正式鉴权时，这层前端结构可以直接复用
+1. 小程序调用 `wx.login`
+2. 前端把 `code` 发给后端
+3. 后端返回：
+   - `sessionToken`
+   - `sessionExpiresAt`
+4. 小程序把 token 存进本地 storage
+5. 后续请求自动通过 `Authorization: Bearer <token>` 带上
+6. 快过期时自动请求 `/api/auth/refresh`
 
 ### 后端数据文件
 
-初始种子数据：
+初始化种子数据：
 
 ```text
 backend/data/seed.json
 ```
 
-运行时数据：
+运行时 SQLite 数据库：
 
 ```text
-backend/data/runtime/db.json
+backend/data/runtime/app.db
 ```
 
-运行时数据已经加入 `.gitignore`，不会污染仓库。
+运行时数据目录已经加入 `.gitignore`，不会污染仓库。
 
-如果你想把后端数据重置回初始状态，可以调用：
+重置测试数据：
 
 ```text
 POST /api/debug/reset
 ```
 
-也可以直接在本地管理后台点“重置测试数据”按钮。
+或者直接在本地管理后台点“重置测试数据”。
+
+## SQLite 表结构
+
+当前核心表：
+
+- `auth_state`
+- `sessions`
+- `pets`
+- `members`
+- `records`
+- `reminder_settings`
+
+其中：
+
+- 登录 token 保存在 `sessions`
+- 猫咪档案保存在 `pets`
+- 疫苗 / 驱虫 / 体重统一保存在 `records`
+
+## 管理后台
+
+后台入口：
+
+```text
+/admin
+```
+
+本地开发时，如果没有配置 `ADMIN_USERNAME` 和 `ADMIN_PASSWORD`，后台默认不加锁。
+
+一旦配置了这两个环境变量：
+
+```bash
+ADMIN_USERNAME=admin
+ADMIN_PASSWORD=change-me
+```
+
+以下入口都会启用 Basic Auth：
+
+- `/admin`
+- `/admin/app.js`
+- `/admin/styles.css`
+- `/api/admin/snapshot`
+- `/api/admin/reset`
+- `/api/debug/reset`
+
+这层保护主要是为了部署到公网时，不让别人直接看到用户数据和 session。
+
+## 部署准备
+
+仓库里已经补了这些部署文件：
+
+- [Dockerfile](/Users/jeremy/Desktop/Vibe%20Coding/Codex/小猫来了/Dockerfile)
+- [.dockerignore](/Users/jeremy/Desktop/Vibe%20Coding/Codex/小猫来了/.dockerignore)
+- [.env.example](/Users/jeremy/Desktop/Vibe%20Coding/Codex/小猫来了/.env.example)
+- [ecosystem.config.cjs](/Users/jeremy/Desktop/Vibe%20Coding/Codex/小猫来了/ecosystem.config.cjs)
+- [deploy/nginx.conf](/Users/jeremy/Desktop/Vibe%20Coding/Codex/小猫来了/deploy/nginx.conf)
+
+### Docker 运行
+
+```bash
+docker build -t xiaomaolaile-backend .
+docker run -d \
+  --name xiaomaolaile-backend \
+  -p 8787:8787 \
+  --env-file .env.production \
+  xiaomaolaile-backend
+```
+
+### PM2 运行
+
+```bash
+pm2 start ecosystem.config.cjs
+pm2 save
+```
+
+### Nginx 反代
+
+参考：
+
+- [deploy/nginx.conf](/Users/jeremy/Desktop/Vibe%20Coding/Codex/小猫来了/deploy/nginx.conf)
+
+正式环境建议：
+
+- 给后端配独立域名
+- 开启 HTTPS
+- 小程序后台配置 `request` 合法域名
+
+## 正式上线前还需要做的事
+
+如果你要给别人真实体验，而不是只看 mock 演示版，接下来还需要：
+
+1. 把后端部署到公网 HTTPS 域名
+2. 把小程序 `useMock` 改成 `false`
+3. 把 `backendBaseUrl` 改成线上 HTTPS 地址
+4. 在微信小程序后台配置合法域名
+5. 配置 `WECHAT_APPID / WECHAT_APP_SECRET`
+6. 给 `/admin` 配置管理员用户名密码
 
 ## 当前体验路径
 
-当前 mock 流程是：
+当前主流程是：
 
 1. 启动登录页
-2. 微信授权登录（mock）
+2. 微信授权登录
 3. 初次建猫 3 步引导
-4. 进入首页
+4. 首页
 
-如果想重新体验登录和首次引导：
+如果想重新体验：
 
 1. 进入“我的”
 2. 点击“退出登录”
-3. 重新进入启动登录页
+3. 再次进入启动登录页
 
 ## 目录结构
 
 ```text
+backend/                   本地后端
+  admin/                   管理后台
+  data/                    seed 和运行时数据库
+  lib/                     SQLite 存储层
+deploy/                    部署示例配置
 miniprogram/               小程序源码
-  pages/                   页面
-  services/                API 层
-  store/                   mock 状态
-  data/                    mock 数据
-  types/                   类型定义
-dist/miniprogram/          构建产物
+dist/miniprogram/          小程序构建产物
 project.config.json        微信开发者工具配置
 ```
-
-## 注意事项
-
-- `project.private.config.json` 是本地开发者工具私有配置，不需要同步。
-- `dist/` 是构建产物，可以重新生成。
-- 如果后面接入真实后端 / 云开发，换电脑时还要同步环境变量、云环境 ID 和后台配置。

@@ -7,8 +7,11 @@ const { randomUUID } = require("crypto");
 const { readDb, updateDb, resetDb } = require("./lib/store");
 
 const PORT = Number(process.env.PORT || 8787);
+const HOST = process.env.HOST || "127.0.0.1";
 const WECHAT_APPID = process.env.WECHAT_APPID || "";
 const WECHAT_APP_SECRET = process.env.WECHAT_APP_SECRET || "";
+const ADMIN_USERNAME = process.env.ADMIN_USERNAME || "";
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "";
 const SESSION_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 const ADMIN_DIR = path.join(__dirname, "admin");
 
@@ -82,6 +85,45 @@ function sendText(res, statusCode, contentType, body) {
     "Cache-Control": "no-store"
   });
   res.end(body);
+}
+
+function isAdminAuthEnabled() {
+  return Boolean(ADMIN_USERNAME && ADMIN_PASSWORD);
+}
+
+function getBasicAuthCredentials(req) {
+  const authHeader = req.headers.authorization || req.headers.Authorization;
+  if (!authHeader || typeof authHeader !== "string") return null;
+  const matched = authHeader.match(/^Basic\s+(.+)$/i);
+  if (!matched) return null;
+  try {
+    const decoded = Buffer.from(matched[1], "base64").toString("utf8");
+    const separatorIndex = decoded.indexOf(":");
+    if (separatorIndex < 0) return null;
+    return {
+      username: decoded.slice(0, separatorIndex),
+      password: decoded.slice(separatorIndex + 1)
+    };
+  } catch (error) {
+    return null;
+  }
+}
+
+function requireAdmin(req, res) {
+  if (!isAdminAuthEnabled()) {
+    return true;
+  }
+  const credentials = getBasicAuthCredentials(req);
+  if (credentials && credentials.username === ADMIN_USERNAME && credentials.password === ADMIN_PASSWORD) {
+    return true;
+  }
+  res.writeHead(401, {
+    "Content-Type": "text/plain; charset=utf-8",
+    "Cache-Control": "no-store",
+    "WWW-Authenticate": 'Basic realm="xiaomaolaile-admin"'
+  });
+  res.end("需要管理员认证");
+  return false;
 }
 
 function serveStaticFile(res, filePath) {
@@ -251,26 +293,31 @@ async function handleRequest(req, res) {
   }
 
   if ((pathname === "/admin" || pathname === "/admin/") && req.method === "GET") {
+    if (!requireAdmin(req, res)) return;
     serveStaticFile(res, path.join(ADMIN_DIR, "index.html"));
     return;
   }
 
   if (pathname === "/admin/app.js" && req.method === "GET") {
+    if (!requireAdmin(req, res)) return;
     serveStaticFile(res, path.join(ADMIN_DIR, "app.js"));
     return;
   }
 
   if (pathname === "/admin/styles.css" && req.method === "GET") {
+    if (!requireAdmin(req, res)) return;
     serveStaticFile(res, path.join(ADMIN_DIR, "styles.css"));
     return;
   }
 
   if (pathname === "/api/admin/snapshot" && req.method === "GET") {
+    if (!requireAdmin(req, res)) return;
     sendJson(res, 200, buildAdminSnapshot());
     return;
   }
 
   if (pathname === "/api/admin/reset" && req.method === "POST") {
+    if (!requireAdmin(req, res)) return;
     const db = resetDb();
     sendJson(res, 200, {
       ok: true,
@@ -285,6 +332,7 @@ async function handleRequest(req, res) {
   }
 
   if (pathname === "/api/debug/reset" && req.method === "POST") {
+    if (!requireAdmin(req, res)) return;
     const db = resetDb();
     sendJson(res, 200, db);
     return;
@@ -672,6 +720,6 @@ const server = http.createServer((req, res) => {
   });
 });
 
-server.listen(PORT, "127.0.0.1", () => {
-  console.log(`xiaomaolaile backend listening on http://127.0.0.1:${PORT}`);
+server.listen(PORT, HOST, () => {
+  console.log(`xiaomaolaile backend listening on http://${HOST}:${PORT}`);
 });

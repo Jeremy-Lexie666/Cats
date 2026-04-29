@@ -5,6 +5,7 @@
   "description": "微信小程序：小猫成长记录 MVP",
   "scripts": {
     "backend:start": "node backend/server.js",
+    "backend:start:prod": "NODE_ENV=production HOST=0.0.0.0 node backend/server.js",
     "doctor": "node scripts/doctor.js",
     "build:miniprogram": "rm -rf dist/miniprogram && tsc -p tsconfig.miniprogram.build.json && npm run copy:miniprogram-assets",
     "copy:miniprogram-assets": "mkdir -p dist/miniprogram && rsync -a --include='*/' --include='*.json' --include='*.wxml' --include='*.wxss' --include='*.svg' --include='*.png' --include='*.jpg' --include='*.jpeg' --include='*.webp' --exclude='*' miniprogram/ dist/miniprogram/",
