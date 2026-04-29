@@ -56,6 +56,7 @@ Page({
   },
   addRecord(event: WechatMiniprogram.TouchEvent) {
     const type = event.currentTarget.dataset.type as string;
-    wx.navigateTo({ url: `/pages/records/edit/index?petId=${this.data.petId}&type=${type}` });
+    const mode = type === "weight" ? "weightOnly" : "healthOnly";
+    wx.navigateTo({ url: `/pages/records/edit/index?petId=${this.data.petId}&type=${type}&mode=${mode}` });
   }
 });

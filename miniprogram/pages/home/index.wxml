@@ -29,7 +29,7 @@
     </view>
   </view>
 
-  <view class="light-card weight-card" bindtap="openRecords">
+  <view class="light-card weight-card" bindtap="openWeight">
     <view class="row-between">
       <view class="weight-copy">
         <view class="row-title">最近体重</view>

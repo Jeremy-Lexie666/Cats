@@ -35,17 +35,29 @@ type HistoryItem = {
 const DEFAULT_PLOT_WIDTH = 300;
 const PLOT_HEIGHT = 214;
 
-function getRecordDaysDiff(recordedAt: string, now = new Date()): number {
+function getDateStart(recordedAt: string): number {
   const date = new Date(recordedAt);
-  const start = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
-  const target = new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
-  return Math.floor((start - target) / 86400000);
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
+}
+
+function getRecordDaysDiffFromBase(recordedAt: string, baseRecordedAt: string): number {
+  const base = getDateStart(baseRecordedAt);
+  const target = getDateStart(recordedAt);
+  return Math.floor((base - target) / 86400000);
 }
 
 function filterWeights(records: WeightRecord[], range: RangeKey): WeightRecord[] {
   if (range === "all") return records;
+  if (!records.length) return [];
+
   const maxDays = Number(range);
-  return records.filter((item) => getRecordDaysDiff(item.recordedAt) <= maxDays);
+  const sorted = [...records].sort((a, b) => a.recordedAt.localeCompare(b.recordedAt));
+  const latestRecordedAt = sorted[sorted.length - 1].recordedAt;
+
+  return sorted.filter((item) => {
+    const diffDays = getRecordDaysDiffFromBase(item.recordedAt, latestRecordedAt);
+    return diffDays >= 0 && diffDays <= maxDays;
+  });
 }
 
 function formatWeight(weight: number): string {
@@ -152,6 +164,7 @@ Page({
     compareValue: "--",
     compareDeltaClass: "",
     historyCountText: "0条",
+    chartEmptyText: "",
     yAxisLabels: ["0.0", "0.0", "0.0"],
     rangeTabs: [
       { key: "7", label: "7天" },
@@ -167,16 +180,44 @@ Page({
   async onShow() {
     await this.refresh();
   },
-  onLoad(options: Record<string, string>) {
+  async onLoad(options: Record<string, string>) {
+    if (options.petId) {
+      this.setData({ petId: options.petId });
+      return;
+    }
+
+    const auth = await api.getAuthState();
+    const pets = await api.listPets();
     this.setData({
-      petId: options.petId || ""
+      petId: auth.currentPetId || pets[0]?.id || ""
     });
   },
   async refresh() {
+    if (!this.data.petId) {
+      const auth = await api.getAuthState();
+      const pets = await api.listPets();
+      const petId = auth.currentPetId || pets[0]?.id || "";
+      if (!petId) {
+        this.setData({
+          currentWeight: "--",
+          compareValue: "--",
+          compareDeltaClass: "",
+          yAxisLabels: ["0.0", "0.0", "0.0"],
+          chartPoints: [],
+          chartSegments: [],
+          chartDates: [],
+          historyItems: [],
+          historyCountText: "0条"
+        });
+        return;
+      }
+      this.setData({ petId });
+    }
+
     const records = await api.listRecords({ petId: this.data.petId, type: "weight" });
     const weights = records.filter((item): item is WeightRecord => item.type === "weight");
     const filtered = filterWeights(weights, this.data.selectedRange);
-    const chartSource = filtered.length ? filtered : weights;
+    const chartSource = filtered;
     const sortedDesc = [...weights].sort((a, b) => b.recordedAt.localeCompare(a.recordedAt));
     const latest = sortedDesc[0];
     const previous = sortedDesc[1];
@@ -191,6 +232,7 @@ Page({
       compareValue: latest && previous ? `${delta >= 0 ? "+" : "-"}${Math.abs(delta).toFixed(1)} kg (${deltaPercent}%)` : "--",
       compareDeltaClass: delta > 0 ? "up" : delta < 0 ? "down" : "",
       yAxisLabels: buildYAxis(chartSource),
+      chartEmptyText: chartSource.length ? "" : "该时间段暂无体重记录",
       chartPoints: points,
       chartSegments: segments,
       chartDates: dates,

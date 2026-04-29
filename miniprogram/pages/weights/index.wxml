@@ -45,6 +45,8 @@
           <view class="grid-column col-2"></view>
           <view class="grid-column col-3"></view>
 
+          <view wx:if="{{chartEmptyText}}" class="chart-empty">{{chartEmptyText}}</view>
+
           <view
             wx:for="{{chartSegments}}"
             wx:key="id"

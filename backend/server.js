@@ -113,6 +113,60 @@ function getUpcomingReminder(pet, records) {
     .sort((a, b) => a.daysLeft - b.daysLeft)[0];
 }
 
+function buildHomeReminderItems(records) {
+  const rows = records
+    .filter((item) => item.type === "vaccine" || item.type === "deworm")
+    .filter((item) => Boolean(item.nextDueAt))
+    .map((item) => {
+      const daysLeft = getDaysLeft(item.nextDueAt);
+      return {
+        id: item.id,
+        label: item.type === "vaccine" ? "疫苗接种" : `${item.mode === "internal" ? "体内" : "体外"}驱虫`,
+        dueText: daysLeft <= 0 ? "今天" : `${daysLeft}天后`,
+        daysLeft
+      };
+    })
+    .sort((a, b) => a.daysLeft - b.daysLeft)
+    .slice(0, 2)
+    .map(({ id, label, dueText }) => ({ id, label, dueText }));
+
+  if (rows.length >= 2) {
+    return rows;
+  }
+
+  return [
+    ...rows,
+    { id: "placeholder_vaccine", label: "疫苗接种", dueText: "待补充" },
+    { id: "placeholder_deworm", label: "体内驱虫", dueText: "待补充" }
+  ].slice(0, 2);
+}
+
+function buildHomeWeightTrend(records) {
+  const weights = records.filter((item) => item.type === "weight").sort((a, b) => b.recordedAt.localeCompare(a.recordedAt));
+  if (weights.length >= 2) {
+    const delta = Number((weights[0].weightKg - weights[1].weightKg).toFixed(1));
+    if (delta === 0) {
+      return { text: "持平", className: "" };
+    }
+    return {
+      text: `${delta > 0 ? "↑" : "↓"} ${Math.abs(delta).toFixed(1)} kg`,
+      className: delta > 0 ? "up" : "down"
+    };
+  }
+
+  const note = weights[0]?.note || "";
+  const matched = note.match(/([+-]?\d+(?:\.\d+)?)kg/i);
+  if (matched) {
+    const value = Number(matched[1]);
+    return {
+      text: `${value >= 0 ? "↑" : "↓"} ${Math.abs(value).toFixed(1)} kg`,
+      className: value >= 0 ? "up" : "down"
+    };
+  }
+
+  return { text: "稳定", className: "" };
+}
+
 function sendJson(res, statusCode, payload) {
   res.writeHead(statusCode, {
     "Content-Type": "application/json; charset=utf-8",
@@ -643,8 +697,10 @@ async function handleRequest(req, res) {
     sendJson(res, 200, {
       currentPet,
       reminder: currentPet ? getUpcomingReminder(currentPet, currentPetRecords) : undefined,
+      reminderItems: buildHomeReminderItems(currentPetRecords),
       latestWeight: getLatestWeight(currentPetRecords),
       latestRecord: getLatestRecord(currentPetRecords),
+      weightTrend: buildHomeWeightTrend(currentPetRecords),
       petCount: getFamilyPets(authResult.db, authResult.user.familyId).length,
       familyMemberCount: getFamilyMembers(authResult.db, authResult.user.familyId).length
     });
@@ -704,7 +760,18 @@ async function handleRequest(req, res) {
           item.id === authResult.user.id
             ? {
                 ...item,
-                currentPetId: pet.id
+                currentPetId: pet.id,
+                hasCompletedOnboarding: true
+              }
+            : item
+        );
+      }
+      if (body.id) {
+        draft.users = draft.users.map((item) =>
+          item.id === authResult.user.id
+            ? {
+                ...item,
+                hasCompletedOnboarding: item.hasCompletedOnboarding || Boolean(body.birthday)
               }
             : item
         );

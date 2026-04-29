@@ -84,11 +84,24 @@ export interface HomeReminder {
   daysLeft: number;
 }
 
+export interface HomeReminderItem {
+  id: string;
+  label: string;
+  dueText: string;
+}
+
+export interface HomeWeightTrend {
+  text: string;
+  className: string;
+}
+
 export interface HomeData {
   currentPet?: PetProfile;
   reminder?: HomeReminder;
+  reminderItems?: HomeReminderItem[];
   latestWeight?: WeightRecord;
   latestRecord?: PetRecord;
+  weightTrend?: HomeWeightTrend;
   petCount: number;
   familyMemberCount: number;
 }

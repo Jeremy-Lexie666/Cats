@@ -48,10 +48,31 @@ Page({
     this.setData({ filterType: type });
     await this.refresh();
   },
-  createRecord() {
+  async ensureCurrentPet(): Promise<string> {
+    if (this.data.currentPetId) {
+      return this.data.currentPetId;
+    }
+    const auth = await api.getAuthState();
+    const pets = await api.listPets();
+    const petId = auth.currentPetId || pets[0]?.id || "";
+    if (petId) {
+      this.setData({
+        currentPetId: petId,
+        petName: pets.find((item) => item.id === petId)?.name || pets[0]?.name || ""
+      });
+      return petId;
+    }
+    return "";
+  },
+  async createRecord() {
+    const petId = await this.ensureCurrentPet();
+    if (!petId) {
+      wx.showToast({ title: "请先完成猫咪建档", icon: "none" });
+      return;
+    }
     const type = this.data.filterType === "all" ? "vaccine" : this.data.filterType;
     const mode = type === "weight" ? "weightOnly" : type === "deworm" || type === "vaccine" ? "healthOnly" : "all";
-    wx.navigateTo({ url: `/pages/records/edit/index?petId=${this.data.currentPetId}&type=${type}&mode=${mode}` });
+    wx.navigateTo({ url: `/pages/records/edit/index?petId=${petId}&type=${type}&mode=${mode}` });
   },
   editRecord(event: WechatMiniprogram.TouchEvent) {
     const { id, type } = event.currentTarget.dataset as { id?: string; type?: string };

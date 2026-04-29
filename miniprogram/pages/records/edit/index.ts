@@ -9,6 +9,7 @@ function getToday() {
 
 Page({
   data: {
+    pageReady: false,
     recordId: "",
     petId: "",
     selectedType: "vaccine",
@@ -29,15 +30,22 @@ Page({
     note: ""
   },
   async onLoad(options: Record<string, string>) {
-    const auth = await api.getAuthState();
-    const petId = options.petId || auth.currentPetId;
     const pageMode = options.mode || "all";
     const recordId = options.recordId || "";
+    const optionType = options.type || "";
     const selectedType =
-      pageMode === "weightOnly" ? "weight" : options.type === "deworm" ? "deworm" : "vaccine";
+      optionType === "weight"
+        ? "weight"
+        : pageMode === "weightOnly"
+          ? "weight"
+          : optionType === "deworm"
+            ? "deworm"
+            : "vaccine";
+
     this.setData({
+      pageReady: false,
       recordId,
-      petId,
+      petId: options.petId || "",
       selectedType,
       pageMode
     });
@@ -45,6 +53,16 @@ Page({
     wx.setNavigationBarTitle({
       title: recordId ? "编辑记录" : "新增记录"
     });
+
+    let fallbackPetId = options.petId || "";
+    if (!fallbackPetId) {
+      const auth = await api.getAuthState();
+      const pets = await api.listPets();
+      fallbackPetId = auth.currentPetId || pets[0]?.id || "";
+      if (fallbackPetId) {
+        this.setData({ petId: fallbackPetId });
+      }
+    }
 
     if (recordId) {
       const record = await api.getRecord(recordId);
@@ -80,6 +98,8 @@ Page({
         });
       }
     }
+
+    this.setData({ pageReady: true });
   },
   switchType(event: WechatMiniprogram.TouchEvent) {
     this.setData({ selectedType: event.currentTarget.dataset.type as string });
@@ -88,12 +108,16 @@ Page({
     const field = event.currentTarget.dataset.field as string;
     this.setData({ [field]: event.detail.value });
   },
+  handleDateChange(event: WechatMiniprogram.PickerChange) {
+    const field = event.currentTarget.dataset.field as string;
+    this.setData({ [field]: String(event.detail.value || "") });
+  },
   handleModeChange(event: WechatMiniprogram.PickerChange) {
     this.setData({ modeIndex: Number(event.detail.value) });
   },
   async saveRecord() {
     if (!this.data.petId) {
-      wx.showToast({ title: "请先选择猫咪", icon: "none" });
+      wx.showToast({ title: "请先完成猫咪建档", icon: "none" });
       return;
     }
 

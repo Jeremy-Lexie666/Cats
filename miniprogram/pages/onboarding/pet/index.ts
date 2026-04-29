@@ -50,6 +50,10 @@ Page({
       wx.showToast({ title: "先给 ta 起个名字吧", icon: "none" });
       return;
     }
+    if (this.data.step === 1 && !this.data.birthday) {
+      wx.showToast({ title: "请先填写生日", icon: "none" });
+      return;
+    }
     this.setData({ step: Math.min(this.data.step + 1, 2) });
   },
   prevStep() {
@@ -67,19 +71,33 @@ Page({
   },
   async finishFlow() {
     if (this.data.finishLoading) return;
+    if (!this.data.birthday) {
+      wx.showToast({ title: "请先填写生日", icon: "none" });
+      return;
+    }
     this.setData({ finishLoading: true });
-    await api.savePet({
-      id: this.data.petId,
-      name: this.data.name.trim() || "小猫",
-      birthday: this.data.birthday || "2025-01-01",
-      breed: this.data.breed.trim() || "品种待补充",
-      note: "先从记录陪伴开始吧",
-      avatarText: (this.data.name.trim() || "小").slice(0, 1),
-      gender: "unknown",
-      isNeutered: false
-    });
-    await api.completeOnboarding();
-    wx.showToast({ title: "已完成", icon: "success" });
-    wx.switchTab({ url: "/pages/home/index" });
+    try {
+      await api.savePet({
+        id: this.data.petId || undefined,
+        name: this.data.name.trim(),
+        birthday: this.data.birthday,
+        breed: this.data.breed.trim() || "品种待补充",
+        note: "先从记录陪伴开始吧",
+        avatarText: this.data.name.trim().slice(0, 1),
+        gender: "unknown",
+        isNeutered: false
+      });
+      wx.showToast({ title: "已完成", icon: "success" });
+      setTimeout(() => {
+        wx.switchTab({ url: "/pages/home/index" });
+      }, 250);
+    } catch (error) {
+      wx.showToast({
+        title: error instanceof Error ? error.message : "提交失败，请重试",
+        icon: "none"
+      });
+    } finally {
+      this.setData({ finishLoading: false });
+    }
   }
 });

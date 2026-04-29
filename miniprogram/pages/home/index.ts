@@ -1,66 +1,8 @@
 import { api } from "../../services/api";
-import type { PetRecord } from "../../types/domain";
-import { formatPetAge, getDaysLeft } from "../../utils/pet";
+import { formatPetAge } from "../../utils/pet";
 import { syncTabBar } from "../../utils/tabbar";
 
 type ReminderRow = { id: string; label: string; dueText: string };
-type WeightTrendView = { text: string; className: string };
-
-function buildReminderRows(records: PetRecord[]): ReminderRow[] {
-  const rows = records
-    .filter((item): item is Extract<PetRecord, { type: "vaccine" | "deworm" }> => item.type === "vaccine" || item.type === "deworm")
-    .filter((item) => Boolean(item.nextDueAt))
-    .map((item) => {
-      const daysLeft = getDaysLeft(item.nextDueAt);
-      return {
-        id: item.id,
-        label: item.type === "vaccine" ? "疫苗接种" : `${item.mode === "internal" ? "体内" : "体外"}驱虫`,
-        dueText: daysLeft <= 0 ? "今天" : `${daysLeft}天后`,
-        daysLeft
-      };
-    })
-    .sort((a, b) => a.daysLeft - b.daysLeft)
-    .slice(0, 2);
-
-  if (rows.length >= 2) {
-    return rows.map(({ id, label, dueText }) => ({ id, label, dueText }));
-  }
-
-  return [
-    ...rows.map(({ id, label, dueText }) => ({ id, label, dueText })),
-    { id: "placeholder_vaccine", label: "疫苗接种", dueText: "待补充" },
-    { id: "placeholder_deworm", label: "体内驱虫", dueText: "待补充" }
-  ].slice(0, 2);
-}
-
-function getWeightTrend(records: PetRecord[]): WeightTrendView {
-  const weights = records
-    .filter((item): item is Extract<PetRecord, { type: "weight" }> => item.type === "weight")
-    .sort((a, b) => b.recordedAt.localeCompare(a.recordedAt));
-
-  if (weights.length >= 2) {
-    const delta = Number((weights[0].weightKg - weights[1].weightKg).toFixed(1));
-    if (delta === 0) {
-      return { text: "持平", className: "" };
-    }
-    return {
-      text: `${delta > 0 ? "↑" : "↓"} ${Math.abs(delta).toFixed(1)} kg`,
-      className: delta > 0 ? "up" : "down"
-    };
-  }
-
-  const note = weights[0]?.note || "";
-  const matched = note.match(/([+-]?\d+(?:\.\d+)?)kg/i);
-  if (matched) {
-    const value = Number(matched[1]);
-    return {
-      text: `${value >= 0 ? "↑" : "↓"} ${Math.abs(value).toFixed(1)} kg`,
-      className: value >= 0 ? "up" : "down"
-    };
-  }
-
-  return { text: "稳定", className: "" };
-}
 
 function getHomeStatus(reminderItems: ReminderRow[]): string {
   const first = reminderItems[0];
@@ -124,9 +66,8 @@ Page({
     }
 
     const currentPetId = home.currentPet.id;
-    const currentPetRecords = await api.listRecords({ petId: currentPetId });
-    const reminderItems = buildReminderRows(currentPetRecords);
-    const trend = getWeightTrend(currentPetRecords);
+    const reminderItems = (home.reminderItems || []) as ReminderRow[];
+    const trend = home.weightTrend || { text: "稳定", className: "" };
 
     this.setData({
       currentPetId,
@@ -141,19 +82,40 @@ Page({
       loading: false
     });
   },
-  openRecords() {
-    if (!this.data.currentPetId) return;
+  async ensureCurrentPet(actionText: string): Promise<boolean> {
+    if (this.data.currentPetId) {
+      return true;
+    }
+
+    const auth = await api.getAuthState();
+    const pets = await api.listPets();
+    const petId = auth.currentPetId || pets[0]?.id || "";
+    const petName = pets.find((item) => item.id === petId)?.name || pets[0]?.name || "";
+
+    if (petId) {
+      this.setData({
+        currentPetId: petId,
+        ...(petName ? { petName } : {})
+      });
+      return true;
+    }
+
+    wx.showToast({ title: `请先完成猫咪建档后再${actionText}`, icon: "none" });
+    return false;
+  },
+  async openRecords() {
+    if (!(await this.ensureCurrentPet("查看记录"))) return;
     wx.navigateTo({ url: `/pages/records/index?petId=${this.data.currentPetId}` });
   },
   openPets() {
     wx.switchTab({ url: "/pages/pets/index" });
   },
-  openWeight() {
-    if (!this.data.currentPetId) return;
+  async openWeight() {
+    if (!(await this.ensureCurrentPet("查看体重"))) return;
     wx.navigateTo({ url: `/pages/weights/index?petId=${this.data.currentPetId}` });
   },
-  addRecord() {
-    if (!this.data.currentPetId) return;
+  async addRecord() {
+    if (!(await this.ensureCurrentPet("新增健康记录"))) return;
     wx.navigateTo({ url: `/pages/records/edit/index?petId=${this.data.currentPetId}&mode=healthOnly&type=vaccine` });
   }
 });
