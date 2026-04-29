@@ -37,44 +37,51 @@
       </view>
 
       <view class="chart-main">
-        <view class="chart-plot">
-          <view class="grid-line line-top"></view>
-          <view class="grid-line line-mid"></view>
-          <view class="grid-line line-low"></view>
-          <view class="grid-column col-1"></view>
-          <view class="grid-column col-2"></view>
-          <view class="grid-column col-3"></view>
+        <scroll-view class="chart-scroll" scroll-x enhanced show-scrollbar="{{false}}">
+          <view class="chart-scroll-inner" style="width: {{chartWidthPx}};">
+            <view class="chart-plot" style="width: {{chartWidthPx}};">
+              <view class="grid-line line-top"></view>
+              <view class="grid-line line-mid"></view>
+              <view class="grid-line line-low"></view>
+              <view
+                wx:for="{{gridColumns}}"
+                wx:key="*this"
+                class="grid-column"
+                style="left: {{item}};"
+              ></view>
 
-          <view wx:if="{{chartEmptyText}}" class="chart-empty">{{chartEmptyText}}</view>
+              <view wx:if="{{chartEmptyText}}" class="chart-empty">{{chartEmptyText}}</view>
 
-          <view
-            wx:for="{{chartSegments}}"
-            wx:key="id"
-            class="chart-segment"
-            style="left: {{item.left}}; bottom: {{item.bottom}}; width: {{item.width}}; transform: rotate({{item.angle}});"
-          ></view>
+              <view
+                wx:for="{{chartSegments}}"
+                wx:key="id"
+                class="chart-segment"
+                style="left: {{item.left}}; bottom: {{item.bottom}}; width: {{item.width}}; transform: rotate({{item.angle}});"
+              ></view>
 
-          <view
-            wx:for="{{chartPoints}}"
-            wx:key="id"
-            class="chart-point-wrap"
-            style="left: {{item.left}}; bottom: {{item.bottom}};"
-          >
-            <view class="chart-value">{{item.valueText}}</view>
-            <view class="chart-point"></view>
+              <view
+                wx:for="{{chartPoints}}"
+                wx:key="id"
+                class="chart-point-wrap"
+                style="left: {{item.left}}; bottom: {{item.bottom}};"
+              >
+                <view class="chart-value">{{item.valueText}}</view>
+                <view class="chart-point"></view>
+              </view>
+            </view>
+
+            <view class="x-axis" style="width: {{chartWidthPx}};">
+              <view
+                wx:for="{{chartDates}}"
+                wx:key="id"
+                class="x-axis-tick"
+                style="left: {{item.left}};"
+              >
+                {{item.dateText}}
+              </view>
+            </view>
           </view>
-        </view>
-
-        <view class="x-axis">
-          <view
-            wx:for="{{chartDates}}"
-            wx:key="id"
-            class="x-axis-tick"
-            style="left: {{item.left}};"
-          >
-            {{item.dateText}}
-          </view>
-        </view>
+        </scroll-view>
       </view>
     </view>
   </view>

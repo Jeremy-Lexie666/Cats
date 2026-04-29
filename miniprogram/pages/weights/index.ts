@@ -34,6 +34,8 @@ type HistoryItem = {
 
 const DEFAULT_PLOT_WIDTH = 300;
 const PLOT_HEIGHT = 214;
+const CHART_SIDE_PADDING = 24;
+const CHART_MIN_POINT_GAP = 96;
 
 function getDateStart(recordedAt: string): number {
   const date = new Date(recordedAt);
@@ -89,17 +91,24 @@ function buildChartData(
   points: ChartPoint[];
   segments: ChartSegment[];
   dates: ChartDateTick[];
+  chartWidth: number;
+  gridColumns: string[];
 } {
   const sorted = [...weights].sort((a, b) => a.recordedAt.localeCompare(b.recordedAt));
   if (!sorted.length) {
-    return { points: [], segments: [], dates: [] };
+    return { points: [], segments: [], dates: [], chartWidth: plotWidth, gridColumns: [] };
   }
 
+  const chartWidth = Math.max(plotWidth, CHART_SIDE_PADDING * 2 + Math.max(sorted.length - 1, 1) * CHART_MIN_POINT_GAP);
   const bounds = getChartBounds(sorted);
   const span = Math.max(bounds.max - bounds.min, 0.1);
   const usableHeight = PLOT_HEIGHT - 16;
   const positions = sorted.map((item, index) => {
-    const x = sorted.length === 1 ? plotWidth / 2 : (plotWidth / (sorted.length - 1)) * index;
+    const usableWidth = Math.max(chartWidth - CHART_SIDE_PADDING * 2, CHART_MIN_POINT_GAP);
+    const x =
+      sorted.length === 1
+        ? chartWidth / 2
+        : CHART_SIDE_PADDING + (usableWidth / (sorted.length - 1)) * index;
     const y = 8 + ((item.weightKg - bounds.min) / span) * usableHeight;
     return {
       id: item.id,
@@ -138,7 +147,11 @@ function buildChartData(
     });
   }
 
-  return { points, segments, dates };
+  const gridColumns = Array.from({ length: 3 }, (_, index) =>
+    `${CHART_SIDE_PADDING + ((chartWidth - CHART_SIDE_PADDING * 2) / 4) * (index + 1)}px`
+  );
+
+  return { points, segments, dates, chartWidth, gridColumns };
 }
 
 function buildHistory(records: WeightRecord[]): HistoryItem[] {
@@ -172,6 +185,8 @@ Page({
       { key: "90", label: "90天" },
       { key: "all", label: "全部" }
     ],
+    chartWidthPx: `${DEFAULT_PLOT_WIDTH}px`,
+    gridColumns: [] as string[],
     chartPoints: [] as ChartPoint[],
     chartSegments: [] as ChartSegment[],
     chartDates: [] as ChartDateTick[],
@@ -203,6 +218,8 @@ Page({
           compareValue: "--",
           compareDeltaClass: "",
           yAxisLabels: ["0.0", "0.0", "0.0"],
+          chartWidthPx: `${DEFAULT_PLOT_WIDTH}px`,
+          gridColumns: [],
           chartPoints: [],
           chartSegments: [],
           chartDates: [],
@@ -225,7 +242,7 @@ Page({
     const deltaPercent =
       latest && previous && previous.weightKg > 0 ? ((Math.abs(delta) / previous.weightKg) * 100).toFixed(1) : "0.0";
     const plotWidth = await this.measurePlotWidth();
-    const { points, segments, dates } = buildChartData(chartSource, plotWidth);
+    const { points, segments, dates, chartWidth, gridColumns } = buildChartData(chartSource, plotWidth);
 
     this.setData({
       currentWeight: latest ? formatWeight(latest.weightKg) : "--",
@@ -233,6 +250,8 @@ Page({
       compareDeltaClass: delta > 0 ? "up" : delta < 0 ? "down" : "",
       yAxisLabels: buildYAxis(chartSource),
       chartEmptyText: chartSource.length ? "" : "该时间段暂无体重记录",
+      chartWidthPx: `${chartWidth}px`,
+      gridColumns,
       chartPoints: points,
       chartSegments: segments,
       chartDates: dates,
@@ -244,7 +263,7 @@ Page({
     return new Promise((resolve) => {
       const query = this.createSelectorQuery();
       query
-        .select(".chart-plot")
+        .select(".chart-scroll")
         .boundingClientRect((rect) => {
           resolve(rect?.width || DEFAULT_PLOT_WIDTH);
         })

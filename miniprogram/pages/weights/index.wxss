@@ -148,6 +148,14 @@
   overflow: hidden;
 }
 
+.chart-scroll {
+  width: 100%;
+}
+
+.chart-scroll-inner {
+  min-width: 100%;
+}
+
 .chart-plot {
   position: relative;
   height: 214rpx;
@@ -190,18 +198,6 @@
   top: 8rpx;
   bottom: 6rpx;
   border-left: 1rpx dashed rgba(159, 180, 168, 0.22);
-}
-
-.col-1 {
-  left: 25%;
-}
-
-.col-2 {
-  left: 50%;
-}
-
-.col-3 {
-  left: 75%;
 }
 
 .chart-segment {

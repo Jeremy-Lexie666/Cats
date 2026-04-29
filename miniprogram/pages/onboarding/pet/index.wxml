@@ -51,10 +51,30 @@
       <view class="field-label">生日</view>
       <picker mode="date" value="{{birthday}}" bindchange="handleBirthdayChange">
         <view class="step-input picker-input">
-          <view class="{{birthday ? 'picker-value' : 'picker-placeholder'}}">{{birthday || '年 / 月 / 日'}}</view>
+          <view class="picker-date-display {{birthday ? 'picker-value' : 'picker-placeholder'}}">
+            <text>{{birthdayYear}}</text>
+            <text class="picker-divider">/</text>
+            <text>{{birthdayMonth}}</text>
+            <text class="picker-divider">/</text>
+            <text>{{birthdayDay}}</text>
+          </view>
           <view class="picker-icon">◫</view>
         </view>
       </picker>
+
+      <view class="field-label field-label-spaced">性别</view>
+      <view class="gender-segment">
+        <view
+          wx:for="{{genderOptions}}"
+          wx:key="value"
+          class="gender-option gender-option-{{item.value}} {{gender === item.value ? 'active' : ''}}"
+          data-gender="{{item.value}}"
+          bindtap="handleGenderSelect"
+        >
+          <view class="gender-option-icon">{{item.value === 'female' ? '♀' : '♂'}}</view>
+          <view class="gender-option-label">{{item.label}}</view>
+        </view>
+      </view>
 
       <view class="field-label field-label-spaced">品种（可选）</view>
       <input
@@ -77,7 +97,7 @@
     <view class="final-avatar-stage">
       <view class="final-avatar-card">🐱</view>
       <view class="final-name">{{name || '小猫'}}</view>
-      <view class="final-meta">{{ageText}} · {{breed || '品种待补充'}}</view>
+      <view class="final-meta">{{ageText}} · {{genderText}} · {{breed || '品种待补充'}}</view>
     </view>
 
     <button class="ghost-upload-button" bindtap="uploadPhoto">上传真实照片</button>

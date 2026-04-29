@@ -18,11 +18,23 @@ function getHomeStatus(reminderItems: ReminderRow[]): string {
   return "今天也要记得记录";
 }
 
+function getGenderBadge(gender: "male" | "female" | "unknown"): { text: string; className: string } {
+  if (gender === "female") {
+    return { text: "♀", className: "female" };
+  }
+  if (gender === "male") {
+    return { text: "♂", className: "male" };
+  }
+  return { text: "", className: "unknown" };
+}
+
 Page({
   data: {
     currentPetId: "",
     petName: "",
     petAge: "",
+    petGenderText: "",
+    petGenderClass: "",
     petNote: "",
     reminderItems: [] as ReminderRow[],
     reminderCountText: "0条",
@@ -51,6 +63,8 @@ Page({
         currentPetId: "",
         petName: "还没有小猫",
         petAge: "先完成建档",
+        petGenderText: "",
+        petGenderClass: "",
         petNote: "先添加第一只小猫",
         reminderItems: [
           { id: "placeholder_vaccine", label: "疫苗接种", dueText: "待补充" },
@@ -68,11 +82,14 @@ Page({
     const currentPetId = home.currentPet.id;
     const reminderItems = (home.reminderItems || []) as ReminderRow[];
     const trend = home.weightTrend || { text: "稳定", className: "" };
+    const genderBadge = getGenderBadge(home.currentPet.gender);
 
     this.setData({
       currentPetId,
       petName: home.currentPet.name,
       petAge: formatPetAge(home.currentPet.birthday),
+      petGenderText: genderBadge.text,
+      petGenderClass: genderBadge.className,
       petNote: getHomeStatus(reminderItems),
       reminderItems,
       reminderCountText: `${reminderItems.length}条`,
